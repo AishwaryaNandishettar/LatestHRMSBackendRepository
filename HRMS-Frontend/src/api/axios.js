@@ -4,9 +4,12 @@ import axios from "axios";
 console.log('🔍 VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
 console.log('🔍 All env vars:', import.meta.env);
 
+const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8082"; // fallback for local dev
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8082",
-  // withCredentials not needed — JWT is sent via Authorization header
+  baseURL: BASE_URL,
 });
 
 // Debug: Log the baseURL being used

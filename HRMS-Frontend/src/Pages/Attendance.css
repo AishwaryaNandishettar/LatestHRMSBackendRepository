@@ -277,3 +277,31 @@ td:nth-child(12):contains("Pending") {
   position: relative;   /* ✅ ADD */
   z-index: 1;           /* ✅ LOWER than table */
 }
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px; /* IMPORTANT for mobile scroll */
+}
+
+/* Mobile tuning */
+@media (max-width: 768px) {
+  .table-wrapper {
+    overflow-x: scroll;
+  }
+
+  table {
+    min-width: 600px;
+  }
+
+  th, td {
+    font-size: 12px;
+    padding: 8px;
+    white-space: nowrap;
+  }
+}
