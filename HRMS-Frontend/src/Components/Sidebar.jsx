@@ -45,9 +45,7 @@ const handleMenuClick = () => {
 };
   return (
     <div
-      className={`${styles.sidebarContainer} ${
-        isOpen ? styles.open : styles.closed
-      }`}
+     className={`${styles.sidebarContainer} ${isOpen ? "open" : ""}`}
     >
       {/* TOGGLE */}
       <div

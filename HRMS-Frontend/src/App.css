@@ -16,7 +16,7 @@ input, button {
 
 .app-container {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   background: #f5f6fa;
   overflow: hidden; /* VERY IMPORTANT */
@@ -111,26 +111,44 @@ input, button {
   background: #cbd5e1;
   border-radius: 10px;
 }
-/* ================= MOBILE RESPONSIVE FIX ================= */
-@media (max-width: 768px) {
+
+
+ @media (max-width: 768px) {
 
   .app-container {
     flex-direction: column;
-    height: auto;
+    min-height: 100dvh;
   }
 
+  /* SIDEBAR BECOMES DRAWER */
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 260px;
+    height: 100dvh;
+    z-index: 999;
+    transition: 0.3s ease;
   }
 
-  .sidebar.closed {
-    width: 100%;
+  .sidebar.open {
+    left: 0;
   }
 
+  /* CONTENT ALWAYS FULL WIDTH */
   .content-area {
-    height: auto;
+    width: 100%;
+    min-height: 100dvh;
+  }
+
+  /* TABLE FIX */
+  table {
+    min-width: 900px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .page-content {
@@ -138,8 +156,37 @@ input, button {
     overflow-x: auto;
   }
 
-  /* OPTIONAL: hide overlay if not needed */
+  /* OVERLAY */
   .sidebar-overlay {
-    display: none;
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 998;
+  }
+}
+/* ================= FIX MOBILE SCROLL + VIEWPORT ================= */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Fix mobile viewport height issue (VERY IMPORTANT for Vercel + iPhone) */
+@media (max-width: 768px) {
+  .app-container {
+    min-height: 100dvh; /* better than 100vh on mobile */
+  }
+
+  .content-area {
+    min-height: 100dvh;
+  }
+
+  .page-content {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 700px; /* prevents table crushing */
   }
 }
