@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import styles from "./Performance.module.css";
-import { getPerformanceByEmployee, seedPerformanceData, savePerformance, debugEmployeeData } from "../api/performanceApi";
+import { getPerformanceByEmployee, seedPerformanceData, savePerformance, debugEmployeeData, getMyTeam, getMyEmployeeId } from "../api/performanceApi";
 import { getAllEmployees } from "../api/employeeApi";
 import { AuthContext } from "../Context/Authcontext";
 import {
@@ -86,6 +86,7 @@ export default function Performance() {
   const [showParams, setShowParams]     = useState(false);
   const [lastRefresh, setLastRefresh]   = useState(null);
   const [seeding, setSeeding]           = useState(false);
+  const [allPerformanceData, setAllPerformanceData] = useState([]); // Store all performance records
   
   // Manager feedback form state
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
@@ -103,34 +104,50 @@ export default function Performance() {
   const reviews        = perfData?.reviews        || [];
   const promotionReady = overallScore >= 4.5;
 
-  const selectedEmp = employees.find(
-    e => (e.employeeId || e.id) === selectedEmpId
-  );
+  const selectedEmp = isEmployee
+    ? { fullName: user?.name || user?.email, employeeId: selectedEmpId, designation: "", department: "" }
+    : employees.find(e => (e.employeeId || e.id) === selectedEmpId);
 
   /* ── load employees ── */
   useEffect(() => {
     const load = async () => {
       setEmpLoading(true);
       try {
-        const res = await getAllEmployees();
-        const list = Array.isArray(res) ? res : (res?.data || []);
-
-        // active employees only
-        const active = list.filter(
-          e => (e.status || "").toLowerCase() === "active"
-        );
-
-        setEmployees(active);
-
-        // default selection
         if (isEmployee) {
-          // employee sees only their own record
-          const myId = user?.employeeId || user?.empId || user?.id;
-          setSelectedEmpId(myId || "");
+          // Employee: get their correct employeeId from the backend
+          // (avoids using MongoDB _id as fallback)
+          const res = await getMyEmployeeId();
+          const empId = res?.employeeId || user?.employeeId || user?.empId || "";
+          setSelectedEmpId(empId);
+          setEmployees([]); // employees list not needed for employee view
+        } else if (isManager) {
+          // Manager: use the dedicated /my-team endpoint which uses User collection
+          // (User collection has managerEmail reliably set)
+          const team = await getMyTeam();
+          const teamList = Array.isArray(team) ? team : [];
+          setEmployees(teamList);
+          if (teamList.length > 0) {
+            setSelectedEmpId(teamList[0].employeeId || "");
+          }
         } else {
-          // admin/manager: default to first active employee
+          // Admin/HR: get all active employees
+          const res = await getAllEmployees();
+          const list = Array.isArray(res) ? res : (res?.data || []);
+          const active = list.filter(e => (e.status || "").toLowerCase() === "active");
+          setEmployees(active);
           if (active.length > 0) {
-            setSelectedEmpId(active[0].employeeId || active[0].id);
+            setSelectedEmpId(active[0].employeeId || active[0].id || "");
+          }
+        }
+        
+        // Load all performance data for the tracking table
+        if (!isEmployee) {
+          try {
+            const allPerf = await getAllPerformance();
+            setAllPerformanceData(Array.isArray(allPerf) ? allPerf : []);
+          } catch (e) {
+            console.error("Failed to load all performance data:", e);
+            setAllPerformanceData([]);
           }
         }
       } catch (e) {
@@ -183,6 +200,11 @@ export default function Performance() {
       alert("✅ " + result);
       // Refresh current employee's data
       if (selectedEmpId) loadPerformance(selectedEmpId);
+      // Reload all performance data for tracking table
+      if (!isEmployee) {
+        const allPerf = await getAllPerformance();
+        setAllPerformanceData(Array.isArray(allPerf) ? allPerf : []);
+      }
     } catch (e) {
       console.error("Seeding failed:", e);
       const errorMsg = e.response?.data?.message || e.response?.data || e.message || "Unknown error occurred";
@@ -301,7 +323,8 @@ export default function Performance() {
         </p>
       )}
 
-      {/* ── KPI Row ── */}
+      {/* ── KPI Row — hidden for employee role ── */}
+      {!isEmployee && (
       <div className={styles.kpiRow}>
 
         {/* Overall Rating */}
@@ -367,16 +390,17 @@ export default function Performance() {
           <FaUser className={styles.kpiIcon} />
         </div>
       </div>
+      )}
 
       {/* ── No data state ── */}
       {!loading && !perfData && (
-        <EmptyState name={selectedEmp?.fullName || selectedEmpId} />
+        <EmptyState name={selectedEmp?.fullName || user?.name || selectedEmpId} />
       )}
 
       {loading && <Skeleton />}
 
       {/* ── Admin/Manager: Team Performance Tracking (Always Show) ── */}
-      {(isAdmin || isManager) && employees.length > 1 && (
+      {(isAdmin || isManager) && employees.length > 0 && (
         <div className={styles.card}>
           <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 600, color: "#111827" }}>
             {isManager ? "Team Performance Tracking" : "Performance Tracking - All Employees"}
@@ -730,7 +754,7 @@ export default function Performance() {
           )}
 
           {/* ── Admin/Manager: All Employees Summary ── */}
-          {(isAdmin || isManager) && employees.length > 1 && (
+          {(isAdmin || isManager) && employees.length > 0 && (
             <div className={styles.card}>
               <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 600, color: "#111827" }}>
                 Team Overview — Active Employees

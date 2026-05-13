@@ -22,11 +22,16 @@ public class TimesheetController {   // ✅ FIXED
         return service.getMonthlySummary(month);
     }
 
-    @PutMapping("/approve")
-public String approve(@RequestBody Map<String, String> req) {
-    String empId = req.get("empId");
-    String month = req.get("month");
+    @PostMapping("/submit")
+    public Map<String, Object> submitTimesheet(@RequestBody Map<String, Object> req) {
+        return service.submitTimesheet(req);
+    }
 
-    return service.approve(empId, month);
-}
+    @PutMapping("/approve")
+    public String approve(@RequestBody Map<String, String> req) {
+        String empId = req.get("empId");
+        String month = req.get("month");
+
+        return service.approve(empId, month);
+    }
 }

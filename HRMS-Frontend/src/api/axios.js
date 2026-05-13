@@ -6,7 +6,7 @@ console.log('🔍 All env vars:', import.meta.env);
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  "http://localhost:8082"; // fallback for local dev
+  "http://localhost:8082/api"; // Fixed: backend runs on 8082 with /api prefix
 
 const api = axios.create({
   baseURL: BASE_URL,

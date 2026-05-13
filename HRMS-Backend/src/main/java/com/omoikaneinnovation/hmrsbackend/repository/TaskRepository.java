@@ -10,4 +10,6 @@ public interface TaskRepository extends MongoRepository<Task, String> {
     List<Task> findByAssignee(String assignee);
 
     List<Task> findByAssignedBy(String assignedBy);
+    
+    List<Task> findByAssigneeIn(List<String> assignees);
 }

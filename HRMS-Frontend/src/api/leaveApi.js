@@ -23,6 +23,10 @@ export const getLeaves = () => {
   return response;
 };
 
+export const getManagerLeaves = (email) => {
+  return api.get(`/api/leave/manager-leaves?managerEmail=${email}`);
+};
+
 // Get All Leaves (duplicate but keeping as you used it)
 export const getAllLeaves = () => {
   return api.get(`${BASE_URL}/all`);

@@ -19,7 +19,12 @@ public class TestMailController {
 
         String link = "http://localhost:3000/login?email=" + email;
 
-        emailService.sendInviteEmail(email, link,"123456");
+       emailService.sendInviteEmail(
+        email,
+        link,
+        "123456",
+        "Temp@123"
+);
 
         return "Invite Mail Sent";
     }

@@ -22,9 +22,15 @@
     FaSearch,
     FaEllipsisH,
     FaMapMarkerAlt,
+    FaCalendarCheck,
+    FaUserCheck,
   } from "react-icons/fa";
   import { AuthContext } from "../Context/Authcontext";
   import { fetchHomeData } from "../api/homeApi";
+  import { getAllEmployees } from "../api/employeeApi";
+  import { getMyAttendance } from "../api/attendanceApi";
+  import { getMyLeaves } from "../api/leaveApi";
+  import { getEmployeePayroll } from "../api/payrollApi";
   import "./Home.css";
 
   /* ================= DUMMY USERS ================= */
@@ -45,9 +51,47 @@
     const [attendanceChartData, setAttendanceChartData] = useState([]);
     const [leaveChartData, setLeaveChartData] = useState([]);
     const [homeData, setHomeData] = useState(null);
+    
+    // Enhanced state for role-based KPIs
+    const [myAttendancePercentage, setMyAttendancePercentage] = useState(0);
+    const [myLeaveNotifications, setMyLeaveNotifications] = useState(0);
+    const [myPayrollAmount, setMyPayrollAmount] = useState(0);
+    const [teamAttendancePercentage, setTeamAttendancePercentage] = useState(0);
+    const [teamLeaveNotifications, setTeamLeaveNotifications] = useState(0);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [calendarEvents, setCalendarEvents] = useState([]);
+    const [last3MonthsPayroll, setLast3MonthsPayroll] = useState([]);
+    const [systemNotifications, setSystemNotifications] = useState([]);
+    
+    // 🔄 LIVE ATTENDANCE AUTO REFRESH (30 sec)
+useEffect(() => {
+  const interval = setInterval(() => {
+    if (user?.email) {
+      refreshAttendanceStatus();
+    }
+  }, 30000); // 30 seconds
+
+  return () => clearInterval(interval);
+}, [user]);
+    const refreshAttendanceStatus = async () => {
+  try {
+    const data = await fetchHomeData(user.email);
+    setHomeData(data);
+  } catch (err) {
+    console.error("Refresh failed", err);
+  }
+};
     const [showEventsPopup, setShowEventsPopup] = useState(false);
     const [events, setEvents] = useState(0);
     const [upcomingHolidays, setUpcomingHolidays] = useState([]);
+     const currentMonth = new Date().getMonth();
+     const currentMonthEvents = useMemo(() => {
+  return (homeData?.events || []).filter(e => {
+    if (!e.date) return false;
+    return new Date(e.date).getMonth() === currentMonth;
+  });
+}, [homeData]);
+
     const eventDates = useMemo(() => {
   return employees
     .filter(emp => emp.dob)
@@ -56,21 +100,190 @@
       return new Date(new Date().getFullYear(), d.getMonth(), d.getDate());
     });
 }, [employees]);
+
+const currentMonthBirthdays = useMemo(() => {
+  return employees.filter(emp => {
+    if (!emp.dob) return false;
+    return new Date(emp.dob).getMonth() === currentMonth;
+  });
+}, [employees]);
+
     const [notifications, setNotifications] = useState([]);
     const [payrollData, setPayrollData] = useState([]);
 
-    
+    // Enhanced calendar events for May 2026
+    const mayEvents = {
+      1: ["International Labour Day", "May Day", "Maharashtra Day", "Buddha Purnima"],
+      3: ["World Press Freedom Day", "World Laughter Day"],
+      4: ["Star Wars Day"],
+      5: ["World Asthma Day"],
+      8: ["World Red Cross Day", "Rabindra Jayanti"],
+      10: ["Mother's Day", "World Lupus Day"],
+      12: ["International Nurses Day"],
+      15: ["International Day of Families"],
+      18: ["International Museum Day"],
+      21: ["World Day for Cultural Diversity for Dialogue and Development"],
+      22: ["International Day for Biological Diversity"],
+      23: ["World Turtle Day"],
+      28: ["Menstrual Hygiene Day"],
+      31: ["World No Tobacco Day"]
+    };
+
+    // Get events for selected date
+    const getEventsForDate = (date) => {
+      const day = date.getDate();
+      const month = date.getMonth();
+      const year = date.getFullYear();
+      
+      // Only show events for May 2026 and from current date onwards
+      if (year === 2026 && month === 4) { // May is month 4 (0-indexed)
+        const today = new Date();
+        if (date >= today) {
+          return mayEvents[day] || [];
+        }
+      }
+      return [];
+    };
+
+    // Load role-based KPI data
+    const loadRoleBasedData = async () => {
+      if (!user?.email) return;
+
+      try {
+        const userRole = user.role?.toLowerCase();
+        
+        if (userRole === 'employee') {
+          // Load employee-specific data
+          await loadEmployeeKPIData();
+        } else if (userRole === 'manager') {
+          // Load manager-specific data
+          await loadManagerKPIData();
+        }
+        
+        // Load last 3 months payroll for all roles
+        await loadLast3MonthsPayroll();
+        
+        // Load system notifications
+        await loadSystemNotifications();
+        
+      } catch (error) {
+        console.error('Error loading role-based data:', error);
+      }
+    };
+
+    const loadEmployeeKPIData = async () => {
+      try {
+        // Get employee attendance percentage
+        const attendanceData = await getMyAttendance(user.employeeId || user.id);
+        if (attendanceData && attendanceData.length > 0) {
+          const totalDays = attendanceData.length;
+          const presentDays = attendanceData.filter(att => att.checkIn && att.checkIn !== '-').length;
+          const percentage = Math.round((presentDays / totalDays) * 100);
+          setMyAttendancePercentage(percentage);
+        }
+
+        // Get employee leave notifications
+        const leaveData = await getMyLeaves(user.employeeId || user.id);
+        if (leaveData && leaveData.data) {
+          const notifications = leaveData.data.filter(leave => 
+            leave.status === 'Approved' || leave.status === 'Rejected'
+          ).length;
+          setMyLeaveNotifications(notifications);
+        }
+
+        // Get employee payroll amount
+        const payrollData = await getEmployeePayroll(user.employeeCode || user.employeeId);
+        if (payrollData && payrollData.data) {
+          const latestPayroll = payrollData.data[0];
+          if (latestPayroll) {
+            const amount = latestPayroll.netPay || latestPayroll.net || latestPayroll.salary || 0;
+            setMyPayrollAmount(amount);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading employee KPI data:', error);
+      }
+    };
+
+    const loadManagerKPIData = async () => {
+      try {
+        // For manager, we'll use the homeData to get team statistics
+        if (homeData) {
+          // Team attendance percentage (calculated from attendance graph)
+          if (homeData.attendanceGraph && homeData.attendanceGraph.length > 0) {
+            const latestMonth = homeData.attendanceGraph[homeData.attendanceGraph.length - 1];
+            const totalDays = latestMonth.present + latestMonth.absent + latestMonth.leave;
+            const percentage = totalDays > 0 ? Math.round((latestMonth.present / totalDays) * 100) : 0;
+            setTeamAttendancePercentage(percentage);
+          }
+
+          // Team leave notifications (pending leaves for team members)
+          if (homeData.leaveGraph && homeData.leaveGraph.length > 0) {
+            const latestMonth = homeData.leaveGraph[homeData.leaveGraph.length - 1];
+            setTeamLeaveNotifications(latestMonth.pending || 0);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading manager KPI data:', error);
+      }
+    };
+
+    const loadLast3MonthsPayroll = async () => {
+      try {
+        // Mock data for last 3 months payroll - replace with actual API call
+        const mockPayrollData = [
+          { employee: user.name || 'Current User', month: 'Mar 2026', gross: 5000, deductions: 500, net: 4500 },
+          { employee: user.name || 'Current User', month: 'Apr 2026', gross: 5000, deductions: 450, net: 4550 },
+          { employee: user.name || 'Current User', month: 'May 2026', gross: 5200, deductions: 520, net: 4680 },
+        ];
+        setLast3MonthsPayroll(mockPayrollData);
+      } catch (error) {
+        console.error('Error loading payroll data:', error);
+      }
+    };
+
+    const loadSystemNotifications = async () => {
+      try {
+        const userRole = user.role?.toLowerCase();
+        let notifications = [];
+
+        if (userRole === 'admin') {
+          // Admin notifications: missed check-ins, forgot checkouts
+          notifications = [
+            { id: 1, type: 'warning', message: 'John Doe missed check-in yesterday', badge: 1, link: '/attendance' },
+            { id: 2, type: 'info', message: 'Payroll processed for April 2026', badge: 0, link: '/payroll' },
+            { id: 3, type: 'warning', message: '3 employees forgot to checkout', badge: 3, link: '/attendance' },
+          ];
+        } else {
+          // Employee/Manager notifications: payroll, insurance, reimbursements
+          notifications = [
+            { id: 1, type: 'success', message: 'Payroll credited for April 2026', badge: 0, link: '/payroll' },
+            { id: 2, type: 'info', message: 'Insurance claim approved', badge: 0, link: '/insurance-claim' },
+            { id: 3, type: 'pending', message: 'Reimbursement request pending', badge: 1, link: '/reimbursement' },
+          ];
+        }
+
+        setSystemNotifications(notifications);
+      } catch (error) {
+        console.error('Error loading system notifications:', error);
+      }
+    };
+
+    // Load role-based data when user changes
+    useEffect(() => {
+      if (user?.email) {
+        loadRoleBasedData();
+      }
+    }, [user, homeData]);
 
     // Fetch employees
     useEffect(() => {
       const fetchEmployees = async () => {
         try {
-          const res = await axios.get(
-            `${import.meta.env.VITE_API_BASE_URL}/api/employee/all`
-          );
+          const employees = await getAllEmployees();
 
-          if (Array.isArray(res.data)) {
-            setEmployees(res.data);
+          if (Array.isArray(employees)) {
+            setEmployees(employees);
           } else {
             setEmployees([]);
           }
@@ -82,6 +295,44 @@
 
       fetchEmployees();
     }, []);
+
+
+    const loadHomeData = async () => {
+  if (!user?.email) return;
+
+  try {
+    const data = await fetchHomeData(user.email);
+
+    setHomeData(data);
+
+    if (data.attendanceGraph) {
+      setAttendanceChartData(data.attendanceGraph);
+    }
+
+    if (data.leaveGraph) {
+      const totals = data.leaveGraph.reduce(
+        (acc, item) => ({
+          approved: acc.approved + (item.approved || 0),
+          pending: acc.pending + (item.pending || 0),
+          rejected: acc.rejected + (item.rejected || 0),
+        }),
+        { approved: 0, pending: 0, rejected: 0 }
+      );
+
+      setLeaveChartData([
+        { name: "Approved", value: totals.approved },
+        { name: "Pending", value: totals.pending },
+        { name: "Rejected", value: totals.rejected },
+      ]);
+    }
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+
 
     useEffect(() => {
   const fetchPayroll = async () => {
@@ -144,10 +395,16 @@
           // Extract upcoming holidays from events
           if (data.events && Array.isArray(data.events)) {
             const todayStr = new Date().toISOString().split('T')[0];
-            const holidays = data.events
-              .filter(event => event.type === "Holiday" && event.date >= todayStr)
-              .sort((a, b) => a.date.localeCompare(b.date))
-              .slice(0, 5);
+           
+
+const holidays = data.events
+  .filter(event => {
+    if (event.type !== "Holiday") return false;
+    const d = new Date(event.date);
+    return d.getMonth() === currentMonth;
+  })
+  .sort((a, b) => new Date(a.date) - new Date(b.date))
+  .slice(0, 5);
             setUpcomingHolidays(holidays);
           }
 
@@ -180,12 +437,10 @@
     useEffect(() => {
       const fetchEvents = async () => {
         try {
-          const res = await axios.get(
-            `${import.meta.env.VITE_API_BASE_URL}/api/employee/all`
-          );
+          const employees = await getAllEmployees();
           const currentMonth = new Date().getMonth();
-
-          const filtered = res.data.filter((emp) => {
+         
+          const filtered = employees.filter((emp) => {
             if (!emp.dob) return false;
             return new Date(emp.dob).getMonth() === currentMonth;
           });
@@ -203,9 +458,7 @@
     useEffect(() => {
       const fetchNotifications = async () => {
         try {
-          const res = await axios.get(
-            `${import.meta.env.VITE_API_BASE_URL}/api/notifications`
-          );
+         
           
           // Transform notifications to include proper structure
           const notifs = Array.isArray(res.data) 
@@ -233,9 +486,7 @@
       return () => clearInterval(interval);
     }, []);
 
-    const totalEmployees = employees.filter(
-      (e) => (e.status || "").toUpperCase() === "ACTIVE"
-    ).length;
+    const totalEmployees = employees.length;
 
     const pendingLeaves = homeData?.stats?.leavePending || 0;
     const payrollTotal = Array.isArray(payrollData)
@@ -291,19 +542,67 @@
         <div className="kpi-row">
           {user?.role === "employee" && (
             <>
-              <KpiCard title="My Attendance" value="92%" icon={<FaUsers />} color="blue" />
-              <KpiCard title="My Notifications" value="4" icon={<FaBell onClick={() => navigate("/notifications")} style={{ cursor: "pointer" }} />} color="red" />
-              <KpiCard title="My Payroll" value="$4,500" icon={<FaMoneyBillWave />} color="green" />
-              <KpiCard title="Events" value="2" icon={<FaBirthdayCake />} color="blue" />
+              <KpiCard 
+                title="My Attendance" 
+                value={`${myAttendancePercentage}%`} 
+                icon={<FaCalendarCheck />} 
+                color="blue" 
+                onClick={() => navigate("/attendance")}
+              />
+              <KpiCard 
+                title="Leave Notifications" 
+                value={myLeaveNotifications} 
+                icon={<FaBell />} 
+                color="red" 
+                onClick={() => navigate("/leave")}
+              />
+              <KpiCard 
+                title="My Payroll" 
+                value={`$${myPayrollAmount.toLocaleString()}`} 
+                icon={<FaMoneyBillWave />} 
+                color="green" 
+                onClick={() => navigate("/payroll")}
+              />
+              <KpiCard 
+                title="Events" 
+                value={events} 
+                icon={<FaBirthdayCake />} 
+                color="blue" 
+                onClick={() => setShowEventsPopup(true)}
+              />
             </>
           )}
 
           {user?.role === "manager" && (
             <>
-              <KpiCard title="Team Attendance" value="89%" icon={<FaUsers />} color="blue" />
-              <KpiCard title="Team Alerts" value="7" icon={<FaBell />} color="red" />
-              <KpiCard title="Team Payroll" value="$18,500" icon={<FaMoneyBillWave />} color="green" />
-              <KpiCard title="Events" value="3" icon={<FaBirthdayCake />} color="blue" />
+              <KpiCard 
+                title="Team Attendance" 
+                value={`${teamAttendancePercentage}%`} 
+                icon={<FaUserCheck />} 
+                color="blue" 
+                onClick={() => navigate("/attendance")}
+              />
+              <KpiCard 
+                title="Team Leave Notifications" 
+                value={teamLeaveNotifications} 
+                icon={<FaBell />} 
+                color="red" 
+                onClick={() => navigate("/leave")}
+              />
+              <KpiCard 
+                title="My Payroll" 
+                value={`$${myPayrollAmount.toLocaleString()}`} 
+                icon={<FaMoneyBillWave />} 
+                color="green" 
+                onClick={() => navigate("/payroll")}
+              />
+              <KpiCard 
+                title="Events" 
+                value={events} 
+                icon={<FaBirthdayCake />} 
+                color="blue" 
+                onClick={() => setShowEventsPopup(true)}
+              />
             </>
           )}
 
@@ -320,14 +619,16 @@
   title="Pending Leaves" 
   value={pendingLeaves} 
   icon={<FaBell />}
-  color="red" 
+  color="red"
+   onClick={() => navigate("/leave", { state: { focus: "pending" } })}
 />
 
 <KpiCard 
   title="Org Payroll" 
   value={`$${(payrollTotal || 0).toLocaleString()}`}
   icon={<FaMoneyBillWave />}
-  color="orange" 
+  color="orange"
+   onClick={() => navigate("/payroll")} 
 />
 
 <KpiCard
@@ -349,31 +650,38 @@
 
       {/* 🎉 HOLIDAYS */}
       <h3>Upcoming Holidays</h3>
-      {homeData?.events?.length > 0 ? (
-        homeData.events.map((event, i) => (
-          <div key={i} className="popup-item">
-            <strong>{event.title}</strong> - {event.date}
-          </div>
-        ))
-      ) : (
-        <p>No holidays</p>
-      )}
+     {currentMonthEvents.length > 0 ? (
+  currentMonthEvents.map((event, i) => (
+    <div key={i} className="popup-item">
+      📅 <strong>{event.title}</strong> - {event.date}
+    </div>
+  ))
+) : (
+  <p>No events this month</p>
+)}
 
       {/* 🎂 BIRTHDAYS */}
-      <h3 style={{marginTop:"15px"}}>Birthdays</h3>
-      {employees.filter(emp => emp.dob).length > 0 ? (
-        employees.map((emp, i) => {
-          if (!emp.dob) return null;
-          const d = new Date(emp.dob);
-          return (
-            <div key={i} className="popup-item">
-              🎂 {emp.fullName || emp.name} - {d.toLocaleDateString()}
-            </div>
-          );
-        })
-      ) : (
-        <p>No birthdays</p>
-      )}
+      {/* 🎂 BIRTHDAYS */}
+<h3 style={{ marginTop: "15px" }}>Birthdays</h3>
+
+{currentMonthBirthdays.length > 0 ? (
+  currentMonthBirthdays.map((emp, i) => {
+    const d = new Date(emp.dob);
+
+    return (
+      <div key={i} className="popup-item">
+        🎂 {emp.fullName || emp.name} -{" "}
+        {d.toLocaleDateString("en-US", {
+          day: "numeric",
+          month: "short",
+        })}
+      </div>
+    );
+  })
+) : (
+  <p>No birthdays this month</p>
+)}
+      
 
       <button className="close-btn" onClick={() => setShowEventsPopup(false)}>
         Close
@@ -510,31 +818,38 @@
                     </tr>
                   </thead>
                   <tbody>
-                   {employees.length === 0 ? (
+                  {employees.length === 0 ? (
   <tr>
     <td colSpan="4">No employees</td>
   </tr>
 ) : (
- employees
-  .filter(emp => (emp.status || "").toUpperCase() === "ACTIVE")
-  .slice(0, 5)
-  .map((emp, index) => (
-    <tr key={index}>
-      <td className="emp-cell">
-        <img
-         src={`https://ui-avatars.com/api/?name=${emp.fullName || emp.name || "User"}`}
-          alt=""
-        />
-        {emp.fullName || emp.name || emp.employeeName || "N/A"}
-      </td>
-      <td>{emp.department}</td>
-      <td>{emp.designation}</td>
-      <td>
-        <span className="status active">{emp.status}</span>
-      </td>
-    </tr>
-  ))
+  employees
+    .filter(emp => (emp.status || "").toUpperCase() === "ACTIVE")
+    .slice(0, 5)
+    .map((emp, index) => (
+      <tr key={emp.employeeId || index}>
+        <td className="emp-cell">
+          <img
+            src={
+              emp.image && emp.image !== ""
+                ? emp.image
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.fullName)}`
+            }
+            alt=""
+          />
+          {emp.fullName}
+        </td>
+
+        <td>{emp.department}</td>
+        <td>{emp.designation}</td>
+
+        <td>
+          <span className="status active">{emp.status}</span>
+        </td>
+      </tr>
+    ))
 )}
+
                   </tbody>
                 </table>
               </div>
@@ -640,14 +955,29 @@
   className="check-btn"
  onClick={async () => {
   try {
-    const res = await fetch("/api/attendance/checkin", {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/attendance/checkin`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userId: user?.id || user?.empId,   // ✅ REQUIRED
-        name: user?.name,
+        userId: String(
+  user?.employeeId ||
+  user?.empId ||
+  user?.id ||
+  ""
+).trim(),
+
+empId:
+  user?.employeeId ||
+  user?.empId ||
+  user?.id ||
+  "",
+        name:
+  user?.name ||
+  user?.fullName ||
+  user?.email ||
+  "N/A",
         department: user?.department,
          message: `${user?.name} checked in`,
     type: "success",
@@ -655,12 +985,12 @@
       }),
     });
 
-    if (res.ok) {
-      alert("Check-in successful");
-      window.location.reload();
-    } else {
-      alert("Check-in failed");
-    }
+ if (res.ok) {
+  alert("Check-in successful");
+  await refreshAttendanceStatus(); // 🔄 LIVE UPDATE
+} else {
+  alert("Check-in failed");
+}
   } catch (err) {
     console.error(err);
     alert("Error during check-in");
@@ -678,25 +1008,25 @@
   className="check-btn red-btn"
 onClick={async () => {
   try {
-    const res = await fetch("/api/attendance/checkout", {
+    const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/attendance/checkout`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        userId: user?.id || user?.empId,
+    
          message: `${user?.name} checked out`,
     type: "info",
     link: "/attendance"
       }),
     });
 
-    if (res.ok) {
-      alert("Check-out successful");
-      window.location.reload();
-    } else {
-      alert("Check-out failed");
-    }
+  if (res.ok) {
+  alert("Check-out successful");
+  await refreshAttendanceStatus(); // 🔄 LIVE UPDATE
+} else {
+  alert("Check-out failed");
+}
   } catch (err) {
     console.error(err);
     alert("Error during check-out");
@@ -709,37 +1039,75 @@ onClick={async () => {
               </div>
             </div>
 
-            <Calendar className="styled-calendar" />
+            <Calendar 
+              className="styled-calendar" 
+              value={selectedDate}
+              onChange={setSelectedDate}
+              tileContent={({ date, view }) => {
+                if (view === 'month') {
+                  const events = getEventsForDate(date);
+                  if (events.length > 0) {
+                    return <div className="calendar-event-indicator">•</div>;
+                  }
+                }
+                return null;
+              }}
+            />
             <div className="calendar-event-box">
-  <h4>Upcoming Event</h4>
-
-  {homeData?.events?.length > 0 ? (
-    homeData.events
-      .filter(e => e.date === "2026-04-30")
-      .map((event, i) => (
-        <div key={i} className="event-card">
-          <p><strong>Date:</strong> {event.date}</p>
-          <p><strong>Event:</strong> {event.title}</p>
-        </div>
-      ))
-  ) : (
-    <p>No events</p>
-  )}
-</div>
+              <h4>Events for {selectedDate.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}</h4>
+              
+              {(() => {
+                const events = getEventsForDate(selectedDate);
+                if (events.length > 0) {
+                  return (
+                    <div className="events-list">
+                      {events.map((event, index) => (
+                        <div key={index} className="event-item">
+                          🎉 {event}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                } else {
+                  return <p>No events for this date</p>;
+                }
+              })()}
+            </div>
           </div>
         </div>
 
         {/* BOTTOM */}
         <div className="bottom-grid">
           <div className="panel small-panel">
-            <h3>Payroll</h3>
+            <h3>Last 3 Months Payroll</h3>
             <div className="scrollable-box payroll-scroll">
               <table className="emp-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Month</th>
+                    <th>Gross</th>
+                    <th>Deductions</th>
+                    <th>Net Pay</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  <tr><td>John</td><td>Jan 2026</td><td>$5000</td><td>$500</td><td><button className="btn-primary">View</button></td></tr>
-                  <tr><td>Rahul</td><td>Jan 2026</td><td>$4800</td><td>$450</td><td><button className="btn-primary">View</button></td></tr>
-                  <tr><td>Priya</td><td>Jan 2026</td><td>$5200</td><td>$550</td><td><button className="btn-primary">View</button></td></tr>
-                  <tr><td>Amit</td><td>Jan 2026</td><td>$5100</td><td>$500</td><td><button className="btn-primary">View</button></td></tr>
+                  {last3MonthsPayroll.map((payroll, index) => (
+                    <tr key={index}>
+                      <td>{payroll.employee}</td>
+                      <td>{payroll.month}</td>
+                      <td>${payroll.gross}</td>
+                      <td>${payroll.deductions}</td>
+                      <td>${payroll.net}</td>
+                      <td><button className="btn-primary" onClick={() => navigate("/payroll")}>View</button></td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -751,19 +1119,21 @@ onClick={async () => {
               <FaEllipsisH />
             </div>
             <div className="scrollable-box notif-scroll">
-           {Array.isArray(notifications) && notifications.map((n, i) => (
-  <div
-    key={i}
-    className={`notify ${n.type}`}
-   onClick={async () => {
-      if (n.link) navigate(n.link);
-    }}
-    style={{ cursor: "pointer" }}
-  >
-    {n.message}
-  </div>
-))}
-              
+              {systemNotifications.map((notification, index) => (
+                <div
+                  key={notification.id}
+                  className={`notify ${notification.type}`}
+                  onClick={() => {
+                    if (notification.link) navigate(notification.link);
+                  }}
+                  style={{ cursor: "pointer", position: "relative" }}
+                >
+                  {notification.message}
+                  {notification.badge > 0 && (
+                    <span className="notification-badge">{notification.badge}</span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>

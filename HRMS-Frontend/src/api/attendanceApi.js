@@ -16,6 +16,12 @@ export const getMyAttendance = async (empId) => {
   return res.data;   // ✅ FIXED
 };
 
+/* ================= MANAGER ATTENDANCE ================= */
+export const getManagerAttendance = async (email) => {
+  const res = await api.get(`/api/attendance/manager?email=${email}`);
+  return res.data;
+};
+
 /* ================= MANAGER APPROVAL ================= */
 export const approveAttendance = async (empId, date) => {
   const res = await api.put("/api/attendance/approve", { empId, date });

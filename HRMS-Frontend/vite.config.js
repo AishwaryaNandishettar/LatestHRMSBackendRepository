@@ -13,7 +13,8 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['react-is']
+    include: ['react-is'],
+    exclude: ['pdfjs-dist']
   },
   build: {
     commonjsOptions: {
@@ -28,7 +29,7 @@ export default defineConfig({
         defaultHandler(warning);
       }
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1500,
   },
   server: {
     port: 5176,

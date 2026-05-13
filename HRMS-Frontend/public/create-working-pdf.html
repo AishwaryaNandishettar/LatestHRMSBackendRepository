@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Working PDF Template</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .template-option {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .template-option:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .template-option h3 {
+            margin: 0 0 10px 0;
+            color: #1f2937;
+        }
+        .template-option p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border: 1px solid #10b981;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border: 1px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Create Working PDF Templates</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong> Click any template below to generate a PDF file that you can upload to test the offer letter system. These PDFs contain placeholders that will be replaced with actual candidate data.
+        </div>
+
+        <div class="template-option" onclick="createTemplate1()">
+            <h3>🏢 Hero FinCorp Template</h3>
+            <p>Professional offer letter template with company branding and standard placeholders</p>
+            <button type="button">Generate Hero FinCorp PDF</button>
+        </div>
+
+        <div class="template-option" onclick="createTemplate2()">
+            <h3>🚀 Tech Startup Template</h3>
+            <p>Modern template for tech companies with comprehensive salary breakdown</p>
+            <button type="button">Generate Tech Startup PDF</button>
+        </div>
+
+        <div class="template-option" onclick="createTemplate3()">
+            <h3>🏛️ Corporate Template</h3>
+            <p>Formal corporate template with detailed terms and conditions</p>
+            <button type="button">Generate Corporate PDF</button>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        function createTemplate1() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text('HERO FINCORP', 105, 30, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text('Financial Services & Investment Solutions', 105, 40, { align: 'center' });
+            doc.text('Mumbai, Maharashtra, India', 105, 50, { align: 'center' });
+
+            // Date
+            doc.text('Date: {{today}}', 20, 70);
+
+            // Recipient
+            doc.setFont(undefined, 'bold');
+            doc.text('{{candidateName}}', 20, 90);
+            doc.setFont(undefined, 'normal');
+            doc.text('{{candidateEmail}}', 20, 100);
+
+            // Subject
+            doc.setFont(undefined, 'bold');
+            doc.text('Subject: Offer of Employment - {{position}}', 20, 120);
+
+            // Body
+            doc.setFont(undefined, 'normal');
+            const bodyText = [
+                'Dear {{candidateName}},',
+                '',
+                'We are pleased to offer you the position of {{position}} at {{companyName}}.',
+                'This offer is contingent upon successful completion of background verification.',
+                '',
+                'Position Details:',
+                '• Position: {{position}}',
+                '• Department: {{department}}',
+                '• Location: {{location}}',
+                '• Joining Date: {{joiningDate}}',
+                '• Grade: {{grade}}',
+                '',
+                'Compensation Details:',
+                '• Annual CTC: {{ctc}}',
+                '• Basic Salary: {{basic}}',
+                '• HRA: {{hra}}',
+                '• Allowances: {{allowances}}',
+                '• Variable Pay: {{variablePay}}',
+                '',
+                'Terms & Conditions:',
+                '• Probation Period: {{probationPeriod}}',
+                '• Notice Period: {{noticePeriod}}',
+                '• This offer is valid until: {{offerValidUntil}}',
+                '',
+                'Please confirm your acceptance by signing and returning this letter.',
+                '',
+                'We look forward to welcoming you to our team.',
+                '',
+                'Best regards,',
+                'HR Department',
+                '{{companyName}}'
+            ];
+
+            let yPos = 140;
+            bodyText.forEach(line => {
+                if (line === '') {
+                    yPos += 5;
+                } else {
+                    doc.text(line, 20, yPos);
+                    yPos += 8;
+                }
+            });
+
+            // Save
+            doc.save('Hero_FinCorp_Template.pdf');
+            showStatus('✅ Hero FinCorp template generated successfully! Check your downloads folder.', 'success');
+        }
+
+        function createTemplate2() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('OMOIKANE INNOVATIONS PVT LTD', 105, 25, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text('Technology & Innovation Solutions', 105, 35, { align: 'center' });
+
+            // Content
+            doc.setFontSize(12);
+            doc.text('Date: {{today}}', 20, 55);
+
+            doc.setFont(undefined, 'bold');
+            doc.text('[Recipient Name]', 20, 75);
+            doc.setFont(undefined, 'normal');
+            doc.text('Email: {{candidateEmail}}', 20, 85);
+
+            doc.setFont(undefined, 'bold');
+            doc.text('RE: Employment Offer - POSITION APPLIED FOR', 20, 105);
+
+            doc.setFont(undefined, 'normal');
+            const content = [
+                'Dear [Recipient Name],',
+                '',
+                'We are excited to extend an offer for the position of POSITION APPLIED FOR',
+                'at YOUR COMPANY NAME.',
+                '',
+                'Job Details:',
+                '• Role: {{position}}',
+                '• Team: {{department}}', 
+                '• Work Location: {{location}}',
+                '• Start Date: DATE TO START',
+                '',
+                'Compensation Package:',
+                '• Total CTC: {{ctc}} per annum',
+                '• Fixed Components:',
+                '  - Basic: {{basic}}',
+                '  - HRA: {{hra}}',
+                '  - Other Allowances: {{allowances}}',
+                '• Variable Components: {{variablePay}}',
+                '',
+                'Employment Terms:',
+                '• Probation: {{probationPeriod}}',
+                '• Notice Period: {{noticePeriod}}',
+                '• Offer Validity: {{offerValidUntil}}',
+                '',
+                'Please confirm your acceptance by replying to this offer.',
+                '',
+                'Welcome to the team!',
+                '',
+                'Regards,',
+                'Talent Acquisition Team'
+            ];
+
+            let y = 125;
+            content.forEach(line => {
+                if (line === '') {
+                    y += 4;
+                } else {
+                    doc.text(line, 20, y);
+                    y += 7;
+                }
+            });
+
+            doc.save('Tech_Startup_Template.pdf');
+            showStatus('✅ Tech Startup template generated successfully! Check your downloads folder.', 'success');
+        }
+
+        function createTemplate3() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Letterhead
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('CORPORATE SOLUTIONS LTD', 105, 25, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text('Registered Office: Business District, Corporate City', 105, 35, { align: 'center' });
+
+            // Reference and Date
+            doc.setFontSize(11);
+            doc.text('Ref: HR/OFFER/2024/{{candidateName}}', 20, 55);
+            doc.text('Date: {{today}}', 150, 55);
+
+            // Recipient
+            doc.setFont(undefined, 'bold');
+            doc.text('{{candidateName}}', 20, 75);
+            doc.setFont(undefined, 'normal');
+            doc.text('Contact: {{candidateEmail}}', 20, 85);
+
+            // Subject
+            doc.setFont(undefined, 'bold');
+            doc.text('Subject: Letter of Appointment - {{position}}', 20, 105);
+
+            // Formal content
+            doc.setFont(undefined, 'normal');
+            const formalContent = [
+                'Dear {{candidateName}},',
+                '',
+                'Further to our discussions, we are pleased to offer you employment with',
+                '{{companyName}} in the capacity of {{position}}.',
+                '',
+                'TERMS OF EMPLOYMENT:',
+                '',
+                '1. Position & Department:',
+                '   Position: {{position}}',
+                '   Department: {{department}}',
+                '   Location: {{location}}',
+                '   Grade: {{grade}}',
+                '',
+                '2. Commencement:',
+                '   Date of Joining: {{joiningDate}}',
+                '   Probation Period: {{probationPeriod}}',
+                '',
+                '3. Remuneration (Per Annum):',
+                '   Cost to Company (CTC): {{ctc}}',
+                '   Basic Salary: {{basic}}',
+                '   House Rent Allowance: {{hra}}',
+                '   Special Allowances: {{allowances}}',
+                '   Performance Incentive: {{variablePay}}',
+                '',
+                '4. Notice Period: {{noticePeriod}}',
+                '',
+                '5. Offer Validity: {{offerValidUntil}}',
+                '',
+                'This appointment is subject to satisfactory medical examination and',
+                'verification of credentials.',
+                '',
+                'Please confirm your acceptance by signing and returning this letter.',
+                '',
+                'We welcome you to our organization.',
+                '',
+                'Yours sincerely,',
+                '',
+                'Human Resources Department',
+                '{{companyName}}'
+            ];
+
+            let yPosition = 125;
+            formalContent.forEach(line => {
+                if (line === '') {
+                    yPosition += 4;
+                } else {
+                    doc.text(line, 20, yPosition);
+                    yPosition += 6;
+                }
+            });
+
+            doc.save('Corporate_Template.pdf');
+            showStatus('✅ Corporate template generated successfully! Check your downloads folder.', 'success');
+        }
+    </script>
+</body>
+</html>

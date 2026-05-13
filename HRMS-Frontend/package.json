@@ -32,6 +32,8 @@
     "jspdf": "^3.0.4",
     "lucide-react": "^0.563.0",
     "mysql2": "^3.14.3",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^3.11.174",
     "react": "^19.1.0",
     "react-calendar": "^6.0.0",
     "react-chartjs-2": "^5.3.1",

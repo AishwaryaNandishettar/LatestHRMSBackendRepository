@@ -24,10 +24,19 @@ public class TaskController {
         return service.createTask(task);
     }
 
-    // ── GET ALL (admin / manager see everything) ──
+    // ── GET ALL (admin sees everything, manager sees only team tasks) ──
     @GetMapping
-    public List<Task> getAllTasks() {
-        return service.getAllTasks();
+    public List<Task> getAllTasks(Authentication auth) {
+        String userEmail = auth != null ? auth.getName() : "";
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        
+        if (isAdmin) {
+            return service.getAllTasks();
+        } else {
+            // Manager: only see tasks assigned to their team members
+            return service.getTasksByManager(userEmail);
+        }
     }
 
     // ── GET MY TASKS (employee sees only assigned to them) ──

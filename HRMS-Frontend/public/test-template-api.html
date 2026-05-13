@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .template-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .template-id {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Template API Test</h1>
+    
+    <div class="test-section">
+        <h3>Step 1: Get All Templates</h3>
+        <button onclick="getAllTemplates()">Get Templates</button>
+        <div id="templates-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 2: Test Specific Template</h3>
+        <input type="text" id="templateId" placeholder="Enter Template ID" style="width: 300px; padding: 8px;">
+        <button onclick="testTemplate()">Test Template</button>
+        <div id="template-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 3: Test PDF Rendering</h3>
+        <button onclick="testPdfRendering()">Test PDF.js</button>
+        <div id="pdf-result"></div>
+        <canvas id="testCanvas" style="display:none; border: 1px solid #ccc; margin-top: 10px;"></canvas>
+    </div>
+
+    <script>
+        async function getAllTemplates() {
+            try {
+                const response = await fetch('http://localhost:8080/api/offer-templates-simple/all');
+                const data = await response.json();
+                
+                let html = '<div class="success"><h4>✅ Templates Found:</h4>';
+                
+                if (data && data.length > 0) {
+                    data.forEach((template, index) => {
+                        html += `
+                            <div class="template-card">
+                                <strong>${template.templateName}</strong><br>
+                                Company: ${template.companyName}<br>
+                                ID: <span class="template-id">${template.id}</span><br>
+                                Uploaded: ${new Date(template.uploadedAt).toLocaleString()}<br>
+                                <button onclick="document.getElementById('templateId').value='${template.id}'; testTemplate();">
+                                    Test This Template
+                                </button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<p>No templates found</p>';
+                }
+                
+                html += '</div>';
+                document.getElementById('templates-result').innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('templates-result').innerHTML = 
+                    `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testTemplate() {
+            const templateId = document.getElementById('templateId').value;
+            if (!templateId) {
+                alert('Please enter a template ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/offer-templates-simple/preview/${templateId}`);
+                const data = await response.json();
+                
+                let html = '<div class="success"><h4>✅ Template Data:</h4>';
+                html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.pdfBase64) {
+                    html += `<p><strong>PDF Base64 Length:</strong> ${data.pdfBase64.length} characters</p>`;
+                    html += `<p><strong>PDF Header:</strong> ${data.pdfBase64.substring(0, 20)}...</p>`;
+                    
+                    // Try to decode base64
+                    try {
+                        const binaryString = atob(data.pdfBase64);
+                        const pdfHeader = binaryString.substring(0, 4);
+                        html += `<p><strong>PDF Header Check:</strong> ${pdfHeader === '%PDF' ? '✅ Valid PDF' : '❌ Invalid PDF'}</p>`;
+                    } catch (decodeError) {
+                        html += `<p><strong>Base64 Decode:</strong> ❌ Failed - ${decodeError.message}</p>`;
+                    }
+                }
+                
+                html += '</div>';
+                document.getElementById('template-result').innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('template-result').innerHTML = 
+                    `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testPdfRendering() {
+            try {
+                // Test PDF.js loading
+                let pdfjsLib;
+                
+                try {
+                    // Try loading PDF.js
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                    document.head.appendChild(script);
+                    
+                    await new Promise((resolve, reject) => {
+                        script.onload = resolve;
+                        script.onerror = reject;
+                    });
+                    
+                    pdfjsLib = window.pdfjsLib;
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    
+                    document.getElementById('pdf-result').innerHTML = 
+                        `<div class="success">✅ PDF.js loaded successfully (version: ${pdfjsLib.version || 'unknown'})</div>`;
+                        
+                } catch (pdfError) {
+                    document.getElementById('pdf-result').innerHTML = 
+                        `<div class="error">❌ PDF.js loading failed: ${pdfError.message}</div>`;
+                }
+                
+            } catch (error) {
+                document.getElementById('pdf-result').innerHTML = 
+                    `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-load templates on page load
+        window.onload = function() {
+            getAllTemplates();
+        };
+    </script>
+</body>
+</html>

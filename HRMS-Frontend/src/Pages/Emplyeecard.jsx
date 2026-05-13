@@ -4,6 +4,7 @@ import { AuthContext } from "../Context/Authcontext";
 import axios from "axios";
 import * as XLSX from "xlsx";
 import { useNavigate , useLocation} from "react-router-dom";
+import { getAllEmployees, updateEmployee } from "../api/employeeApi";
 import "./Employeedirectory.css";
 import InviteEmployee from "../Components/InviteEmployee";
 const sampleEmployees = [
@@ -104,6 +105,12 @@ const [filterText, setFilterText] = useState("");
 const [columnFilters, setColumnFilters] = useState({});
 const popupRef = useRef();
 
+// ── Update modal state (admin only) ──
+const [showUpdateModal, setShowUpdateModal] = useState(false);
+const [updateTarget, setUpdateTarget] = useState(null); // the employee being edited
+const [updateForm, setUpdateForm] = useState({});
+const [updateSaving, setUpdateSaving] = useState(false);
+
  // ✅ ADD HERE (IMPORTANT)
   const fieldMap = {
     employeename: "fullName",
@@ -139,13 +146,13 @@ useEffect(() => {
 
  const fetchEmployees = async () => {
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/employee/all`);
-    console.log("Employees response:", res.data);
+    const employees = await getAllEmployees();
+    console.log("Employees response:", employees);
     // Ensure response is an array
-    if (Array.isArray(res.data)) {
-      setEmployees(res.data);
+    if (Array.isArray(employees)) {
+      setEmployees(employees);
     } else {
-      console.error("Expected array, got:", typeof res.data);
+      console.error("Expected array, got:", typeof employees);
       setEmployees([]);
     }
   } catch (err) {
@@ -241,9 +248,12 @@ const matchesColumnFilters = Object.keys(columnFilters).every((key) => {
     const actualField = fieldMap[key];   // 🔥 important mapping fix
  
 
-return String(emp[actualField] || "")
-    .toLowerCase()
-    .includes(String(columnFilters[key]).toLowerCase());
+const empValue = emp[actualField];
+
+return String(empValue ?? "")
+  .trim()
+  .toLowerCase()
+  .includes(String(columnFilters[key] ?? "").trim().toLowerCase());
 });
 
 if (!matchesColumnFilters) return false;
@@ -357,6 +367,42 @@ if (!matchesColumnFilters) return false;
     navigate("/onboarding"); // redirect to onboarding page
   };
 
+  // ── Open update modal pre-filled with employee data ──
+  const openUpdateModal = (emp) => {
+    setUpdateTarget(emp);
+    setUpdateForm({
+      fullName: emp.fullName || "",
+      department: emp.department || "",
+      designation: emp.designation || "",
+      email: emp.email || "",
+      bankAccountNumber: emp.bankAccountNumber || "",
+      ifsc: emp.ifsc || "",
+      uan: emp.uan || "",
+      pfMemberId: emp.pfMemberId || "",
+      pf: emp.pf || "",
+      esic: emp.esic || "",
+      designationChanged: emp.designationChanged || "",
+      designationChangedDate: emp.designationChangedDate || "",
+    });
+    setShowUpdateModal(true);
+  };
+
+  const handleUpdateSave = async () => {
+    if (!updateTarget) return;
+    setUpdateSaving(true);
+    try {
+      await updateEmployee(updateTarget.employeeId, updateForm);
+      alert("✅ Employee updated successfully!");
+      setShowUpdateModal(false);
+      fetchEmployees(); // refresh table
+    } catch (err) {
+      console.error("Update failed:", err);
+      alert("❌ Failed to update: " + (err.response?.data || err.message));
+    } finally {
+      setUpdateSaving(false);
+    }
+  };
+
 
  
 
@@ -420,6 +466,87 @@ const getAvatarColor = (name) => {
     </div>
   </div>
 )}
+      {/* ── Update Employee Modal (admin only) ── */}
+      {showUpdateModal && updateTarget && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
+          zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center"
+        }}>
+          <div style={{
+            background: "#fff", borderRadius: 10, padding: 28,
+            width: 620, maxHeight: "85vh", overflowY: "auto",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.18)"
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: 20 }}>
+              Update Employee — {updateTarget.fullName}
+            </h3>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
+              {[
+                { label: "Full Name", key: "fullName" },
+                { label: "Department", key: "department" },
+                { label: "Designation", key: "designation" },
+                { label: "Email", key: "email" },
+                { label: "Bank Account Number", key: "bankAccountNumber" },
+                { label: "IFSC Code", key: "ifsc" },
+                { label: "UAN", key: "uan" },
+                { label: "PF Member ID", key: "pfMemberId" },
+                { label: "PF Number", key: "pf" },
+                { label: "ESIC Number", key: "esic" },
+                { label: "Designation Changed (New)", key: "designationChanged" },
+              ].map(({ label, key }) => (
+                <div key={key}>
+                  <label style={{ fontSize: 12, color: "#555", display: "block", marginBottom: 4 }}>{label}</label>
+                  <input
+                    value={updateForm[key] || ""}
+                    onChange={(e) => setUpdateForm({ ...updateForm, [key]: e.target.value })}
+                    style={{
+                      width: "100%", padding: "7px 10px", borderRadius: 6,
+                      border: "1px solid #ccc", fontSize: 13, boxSizing: "border-box"
+                    }}
+                  />
+                </div>
+              ))}
+              <div>
+                <label style={{ fontSize: 12, color: "#555", display: "block", marginBottom: 4 }}>Designation Changed Date</label>
+                <input
+                  type="date"
+                  value={updateForm.designationChangedDate || ""}
+                  onChange={(e) => setUpdateForm({ ...updateForm, designationChangedDate: e.target.value })}
+                  style={{
+                    width: "100%", padding: "7px 10px", borderRadius: 6,
+                    border: "1px solid #ccc", fontSize: 13, boxSizing: "border-box"
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 22, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowUpdateModal(false)}
+                style={{
+                  padding: "8px 20px", borderRadius: 6, border: "1px solid #ccc",
+                  background: "#f5f5f5", cursor: "pointer", fontSize: 13
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateSave}
+                disabled={updateSaving}
+                style={{
+                  padding: "8px 20px", borderRadius: 6, border: "none",
+                  background: "#0d6efd", color: "#fff", cursor: "pointer",
+                  fontSize: 13, fontWeight: 600
+                }}
+              >
+                {updateSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Header */}
       <div className="directory-header">
         <h2>Employee Directory</h2>
@@ -465,7 +592,8 @@ const getAvatarColor = (name) => {
 
       {/* Employee Table */}
       <div className="table-wrapper">
-        <table className="employee-table">
+        <div className="table-scroll">
+  <table className="employee-table">
           <thead>
             <tr className="table-head">
              <th>
@@ -876,6 +1004,15 @@ const getAvatarColor = (name) => {
     </div>
   )}
 </th>
+              <th><div className="th-header">Bank Account No.</div></th>
+              <th><div className="th-header">IFSC</div></th>
+              <th><div className="th-header">UAN</div></th>
+              <th><div className="th-header">PF Member ID</div></th>
+              <th><div className="th-header">PF</div></th>
+              <th><div className="th-header">ESIC</div></th>
+              <th><div className="th-header">Designation Changed</div></th>
+              <th><div className="th-header">Desig. Changed Date</div></th>
+              {user?.role === "admin" && <th>Action</th>}
             </tr>
 
             {/* Filter row */}
@@ -946,12 +1083,40 @@ const getAvatarColor = (name) => {
                       {emp.status}
                     </span>
                   </td>
+                  <td>{emp.bankAccountNumber || "-"}</td>
+                  <td>{emp.ifsc || "-"}</td>
+                  <td>{emp.uan || "-"}</td>
+                  <td>{emp.pfMemberId || "-"}</td>
+                  <td>{emp.pf || "-"}</td>
+                  <td>{emp.esic || "-"}</td>
+                  <td>{emp.designationChanged || "-"}</td>
+                  <td>{emp.designationChangedDate || "-"}</td>
+                  {user?.role === "admin" && (
+                    <td>
+                      <button
+                        onClick={() => openUpdateModal(emp)}
+                        style={{
+                          padding: "5px 12px",
+                          background: "#0d6efd",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 5,
+                          cursor: "pointer",
+                          fontSize: 12,
+                          fontWeight: 600,
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        ✏ Update
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
           </tbody>
         </table>
-
+         </div>
         
         
       </div>

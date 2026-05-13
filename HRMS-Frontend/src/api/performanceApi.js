@@ -18,6 +18,18 @@ export const getAllPerformance = async () => {
   return res.data;
 };
 
+/** Get manager's team members (uses User collection — reliable) */
+export const getMyTeam = async () => {
+  const res = await axios.get(`${BASE_URL}/my-team`, { headers: authHeaders() });
+  return res.data;
+};
+
+/** Get the logged-in employee's correct employeeId */
+export const getMyEmployeeId = async () => {
+  const res = await axios.get(`${BASE_URL}/my-employee-id`, { headers: authHeaders() });
+  return res.data;
+};
+
 /** Save / upsert a performance record */
 export const savePerformance = async (data) => {
   const res = await axios.post(BASE_URL, data, { headers: authHeaders() });

@@ -165,15 +165,29 @@ export default function TaskProfessional() {
     getAllEmployees()
       .then((res) => {
         const list = res?.data?.content || res?.data || [];
-        setEmployees(Array.isArray(list) ? list : []);
+        const allEmps = Array.isArray(list) ? list : [];
+
+        if (isManager) {
+          // Manager can only assign tasks to their own team members
+          const teamEmps = allEmps.filter(
+            e => (e.managerEmail || "").toLowerCase() === userEmail.toLowerCase()
+          );
+          setEmployees(teamEmps.length > 0 ? teamEmps : allEmps);
+        } else {
+          setEmployees(allEmps);
+        }
       })
       .catch(() => {});
-  }, []);
+  }, [isManager, userEmail]);
 
   /* ── role-based task list ── */
+  // For employees: filter client-side to only their tasks
+  // For managers: backend already returns only their team's tasks (via getTasksByManager),
+  //               so trust the backend response directly — no client-side re-filtering needed
+  // For admins: backend returns all tasks
   const myTasks = isEmployee
     ? tasks.filter((t) => t.assignee === userEmail)
-    : tasks;
+    : tasks; // manager and admin: backend already scoped correctly
 
   /* ── filters ── */
   const filtered = myTasks.filter((t) => {

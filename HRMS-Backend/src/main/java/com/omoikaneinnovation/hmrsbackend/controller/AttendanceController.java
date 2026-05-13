@@ -18,16 +18,28 @@ public class AttendanceController {
     @PostMapping("/checkin")
     public String checkIn(@RequestBody Map<String,String> payload){
         String userId = payload.get("userId");
-        return attendanceService.checkIn(userId);
+        return attendanceService.checkIn(userId, payload);
     }
 
     @PostMapping("/checkout")
     public String checkOut(@RequestBody Map<String,String> payload){
-
         String userId = payload.get("userId");
-          String date = payload.get("date"); // ✅ add this
-        return attendanceService.checkOut(userId,date);
+        String date = payload.get("date");
+        
+        return attendanceService.checkOut(userId, date, payload);
     }
+
+
+
+@GetMapping("/manager")
+public List<AttendanceDTO> getManagerAttendance(@RequestParam String email) {
+    return attendanceService.getManagerAttendance(email);
+}
+
+@GetMapping("/attendance/{userId}")
+public List<Attendance> getByUser(@PathVariable String userId) {
+    return attendanceService.getByUserId(userId);
+}
 
     @GetMapping("/my/{userId}")
     public List<AttendanceDTO> myAttendance(@PathVariable String userId){

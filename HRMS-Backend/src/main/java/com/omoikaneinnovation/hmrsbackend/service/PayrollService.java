@@ -1,19 +1,24 @@
 package com.omoikaneinnovation.hmrsbackend.service;
 
 import com.omoikaneinnovation.hmrsbackend.model.Payroll;
+import com.omoikaneinnovation.hmrsbackend.model.Employee;
 import com.omoikaneinnovation.hmrsbackend.repository.PayrollRepository;
+import com.omoikaneinnovation.hmrsbackend.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class PayrollService {
 
     private final PayrollRepository repo;
+    private final EmployeeRepository employeeRepo;
     
 
-    public PayrollService(PayrollRepository repo) {
+    public PayrollService(PayrollRepository repo, EmployeeRepository employeeRepo) {
         this.repo = repo;
+        this.employeeRepo = employeeRepo;
     }
 
     public Payroll createPayroll(Payroll p){
@@ -21,7 +26,42 @@ public class PayrollService {
     }
 
     public List<Payroll> getAll(){
-        return repo.findAll();
+        List<Payroll> payrolls = repo.findAll();
+        
+        // ✅ Enhance payroll data with Employee bank details if missing
+        for (Payroll payroll : payrolls) {
+            // If bank details are missing in payroll, get them from Employee
+            if ((payroll.getBankAccountNumber() == null || payroll.getBankAccountNumber().isEmpty()) ||
+                (payroll.getPfMemberId() == null || payroll.getPfMemberId().isEmpty()) ||
+                (payroll.getUan() == null || payroll.getUan().isEmpty()) ||
+                (payroll.getIfsc() == null || payroll.getIfsc().isEmpty())) {
+                
+                // Find employee by employeeId
+                Optional<Employee> employeeOpt = employeeRepo.findByEmployeeId(payroll.getEmployeeId());
+                if (employeeOpt.isPresent()) {
+                    Employee employee = employeeOpt.get();
+                    
+                    // Fill missing bank details from Employee
+                    if (payroll.getBankAccountNumber() == null || payroll.getBankAccountNumber().isEmpty()) {
+                        payroll.setBankAccountNumber(employee.getBankAccountNumber());
+                    }
+                    if (payroll.getPfMemberId() == null || payroll.getPfMemberId().isEmpty()) {
+                        payroll.setPfMemberId(employee.getPfMemberId());
+                    }
+                    if (payroll.getUan() == null || payroll.getUan().isEmpty()) {
+                        payroll.setUan(employee.getUan());
+                    }
+                    if (payroll.getIfsc() == null || payroll.getIfsc().isEmpty()) {
+                        payroll.setIfsc(employee.getIfsc());
+                    }
+                    
+                    System.out.println("✅ Enhanced payroll for " + payroll.getEmployeeId() + 
+                                     " with Employee bank details: " + employee.getBankAccountNumber());
+                }
+            }
+        }
+        
+        return payrolls;
     }
 
     public List<Payroll> getEmployeePayroll(String empCode){
@@ -50,8 +90,8 @@ if (payroll == null) {
         e.printStackTrace();
     }
 
-    payroll.setGross(15000.0);
-    payroll.setNet(12000.0);
+    // ✅ PRESERVE existing gross and net values — don't hardcode to 15000/12000
+    // Only update status, not the salary values
     payroll.setPayrollStatus("SUCCESSFUL");
     payroll.setSalaryStatus("CREDITED");
 
@@ -64,37 +104,66 @@ if (payroll == null) {
         List<Payroll> toSave = new java.util.ArrayList<>();
 
         for (Payroll incoming : payrollList) {
-            // Try to find existing record for this employee
-        Payroll existing = repo.findTopByEmployeeIdOrderByUpdatedAtDesc(incoming.getEmployeeId());
+            // ✅ NEW: Try to find existing record by employeeId AND month (prevents data conflicts)
+            String month = incoming.getMonth();
+            String employeeId = incoming.getEmployeeId();
+            
+            Payroll existing = null;
+            
+            // If month is provided, search by month (most accurate)
+            if (month != null && !month.isEmpty()) {
+                existing = repo.findByEmployeeIdAndMonth(employeeId, month);
+            }
+            
+            // Fallback: search by most recent record
+            if (existing == null) {
+                existing = repo.findTopByEmployeeIdOrderByUpdatedAtDesc(employeeId);
+            }
 
-java.util.Optional<Payroll> existingOpt = java.util.Optional.ofNullable(existing);
+            java.util.Optional<Payroll> existingOpt = java.util.Optional.ofNullable(existing);
 
-if (existingOpt.isPresent()) {
-    Payroll existingData = existingOpt.get();
+            if (existingOpt.isPresent()) {
+                Payroll existingData = existingOpt.get();
 
-    incoming.setId(existingData.getId());
+                // ✅ PRESERVE the MongoDB ID to update the same record
+                incoming.setId(existingData.getId());
 
-    if (incoming.getPayrollStatus() == null) {
-        incoming.setPayrollStatus(existingData.getPayrollStatus());
-    }
-    if (incoming.getSalaryStatus() == null) {
-        incoming.setSalaryStatus(existingData.getSalaryStatus());
-    }
+                // ✅ PRESERVE status fields if not provided
+                if (incoming.getPayrollStatus() == null) {
+                    incoming.setPayrollStatus(existingData.getPayrollStatus());
+                }
+                if (incoming.getSalaryStatus() == null) {
+                    incoming.setSalaryStatus(existingData.getSalaryStatus());
+                }
 
-    if (existingData.getInitiatedAt() != null) {
-        incoming.setInitiatedAt(existingData.getInitiatedAt());
-        incoming.setInitiatedDate(existingData.getInitiatedDate());
-    } else {
-        long now = System.currentTimeMillis();
-        incoming.setInitiatedAt(now);
-        incoming.setInitiatedDate(formatDate(now));
-    }
-} else {
-    incoming.setPayrollStatus("INITIATED");
-    long now = System.currentTimeMillis();
-    incoming.setInitiatedAt(now);
-    incoming.setInitiatedDate(formatDate(now));
-}
+                // ✅ PRESERVE initiated dates
+                if (existingData.getInitiatedAt() != null) {
+                    incoming.setInitiatedAt(existingData.getInitiatedAt());
+                    incoming.setInitiatedDate(existingData.getInitiatedDate());
+                } else {
+                    long now = System.currentTimeMillis();
+                    incoming.setInitiatedAt(now);
+                    incoming.setInitiatedDate(formatDate(now));
+                }
+                
+                System.out.println("🔄 UPDATING EXISTING PAYROLL: empId=" + employeeId + 
+                                 ", month=" + month + 
+                                 ", id=" + existingData.getId() +
+                                 ", basic=" + incoming.getBasic() + 
+                                 ", net=" + incoming.getNet());
+            } else {
+                // New record
+                incoming.setPayrollStatus("INITIATED");
+                long now = System.currentTimeMillis();
+                incoming.setInitiatedAt(now);
+                incoming.setInitiatedDate(formatDate(now));
+                
+                System.out.println("✨ CREATING NEW PAYROLL: empId=" + employeeId + 
+                                 ", month=" + month +
+                                 ", basic=" + incoming.getBasic() + 
+                                 ", net=" + incoming.getNet());
+            }
+            
             // Ensure status is uppercase
             String statusValue = (incoming.getStatus() != null) ? incoming.getStatus().toUpperCase() : "ACTIVE";
             incoming.setStatus(statusValue);
@@ -135,10 +204,9 @@ if (existingOpt.isPresent()) {
         e.printStackTrace();
     }
 
-    // Step 2: set SUCCESSFUL + CREDITED
+    // Step 2: set SUCCESSFUL + CREDITED (preserve existing gross/net values)
     list.forEach(p -> {
-        p.setGross(15000.0);
-        p.setNet(12000.0);
+        // ✅ PRESERVE existing gross and net values — don't hardcode
         p.setPayrollStatus("SUCCESSFUL");
         p.setSalaryStatus("CREDITED");
     });

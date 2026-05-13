@@ -137,8 +137,40 @@
         </ol>
     </div>
 
+        </div>
+
+    <!-- LOGIN CREDENTIALS START -->
+    <div class="company-info">
+
+        <p>
+            <span class="label">Application Link:</span>
+            <span class="value">
+                <a th:href="${inviteLink}" th:text="${inviteLink}"></a>
+            </span>
+        </p>
+
+        <p>
+            <span class="label">Username:</span>
+            <span class="value" th:text="${email}"></span>
+        </p>
+
+        <p>
+            <span class="label">Temporary Password:</span>
+            <span class="value" th:text="${password}"></span>
+        </p>
+
+    </div>
+    <!-- LOGIN CREDENTIALS END -->
+
     <p>
-        <a href="#" class="action-button">Complete Your Profile</a>
+       <a th:href="${inviteLink}" class="action-button">
+            Complete Your Profile
+       </a>
+    </p>
+    <p>
+       <a th:href="${inviteLink}" class="action-button">
+    Complete Your Profile
+</a>
     </p>
 
     <p>If you have any questions or need assistance getting started, please don't hesitate to reach out to the HR team.</p>

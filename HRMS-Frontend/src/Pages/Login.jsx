@@ -15,7 +15,6 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isForgot, setIsForgot] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
   const [enteredOtp, setEnteredOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
@@ -62,15 +61,17 @@ console.log("🔥 LOGIN RESPONSE:", data); // Debug
 
 // if using context - PASS ALL DATA TO LOGIN
 login({
+  id: data.id,  // ✅ ADD MongoDB _id
+  _id: data.id, // ✅ ADD as _id fallback
   name: data.name,
   email: data.email,
   role: data.role,
   token: data.token,
   empId: data.empId || data.employeeId, // ✅ PASS empId
   employeeId: data.employeeId || data.empId, // ✅ PASS employeeId
-   // ✅ ADD THESE 2 LINES ONLY
   department: data.department || data.dept,
   reportingManager: data.reportingManager || data.manager,
+  managerEmail: data.managerEmail,
   companyId: data.companyId
 });
 
@@ -83,40 +84,107 @@ navigate("/Home");
   };
  
   
-  /* ================= FORGOT PASSWORD (UI ONLY – SAME AS BEFORE) ================= */
+  /* ================= FORGOT PASSWORD - BACKEND INTEGRATED ================= */
   const handleForgotPassword = () => {
     setIsForgot(true);
     setError("");
   };
 
-  const sendOtp = (e) => {
+  const sendOtp = async (e) => {
     e.preventDefault();
-    const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
-    setOtp(generatedOtp);
-    setOtpSent(true);
-    alert(`✅ OTP sent to ${email}: ${generatedOtp}`);
+    setError("");
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
+      
+      console.log('🔍 Sending OTP request to:', `${apiUrl}/api/auth/forgot-password`);
+      console.log('🔍 Email:', email);
+      
+      const res = await fetch(`${apiUrl}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      console.log('📥 Response status:', res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('❌ Error response:', errorText);
+        throw new Error(errorText || "Failed to send OTP");
+      }
+
+      const data = await res.json();
+      console.log('✅ OTP Response:', data);
+      // ✅ Don't store OTP on frontend for security
+      setOtpSent(true);
+      alert(`✅ OTP sent to ${email}. Please check your email inbox.`);
+      
+    } catch (err) {
+      console.error('❌ Send OTP error:', err);
+      setError(err.message || "Failed to send OTP. Please try again.");
+    }
   };
 
   const verifyOtp = (e) => {
     e.preventDefault();
-    if (enteredOtp === otp) {
-      alert("OTP verified! You can now set a new password.");
-      setOtpSent(false);
-      setOtp("");
-      setEnteredOtp("");
+    
+    // ✅ Just validate OTP format and show password field
+    if (enteredOtp && enteredOtp.trim().length === 4) {
+      // OTP format is valid, user can now enter password
+      // Backend verification will happen when password is submitted
+      setError(""); // Clear any previous errors
     } else {
-      setError("Incorrect OTP. Try again.");
+      setError("Please enter a valid 4-digit OTP");
     }
   };
 
-  const handleResetPassword = (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
-    alert(`✅ Password reset successful for ${email}`);
-    setIsForgot(false);
-    setOtp("");
-    setOtpSent(false);
-    setEnteredOtp("");
-    setNewPassword("");
+    setError("");
+
+    if (!newPassword || newPassword.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082';
+      
+      console.log('🔍 Resetting password for:', email);
+      
+      const res = await fetch(`${apiUrl}/api/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email, 
+          otp: enteredOtp, 
+          newPassword 
+        }),
+      });
+
+      console.log('📥 Response status:', res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('❌ Error response:', errorText);
+        throw new Error(errorText || "Failed to reset password");
+      }
+
+      alert(`✅ Password reset successful! You can now login with your new password.`);
+      
+      // Reset all states and go back to login
+      setIsForgot(false);
+      setOtpSent(false);
+      setEnteredOtp("");
+      setNewPassword("");
+      setEmail("");
+      setPassword("");
+      
+    } catch (err) {
+      console.error('❌ Reset password error:', err);
+      setError(err.message || "Failed to reset password. Please try again.");
+    }
   };
 
   return (
@@ -194,7 +262,8 @@ navigate("/Home");
                 ← Cancel
               </p>
 
-              {enteredOtp === otp && (
+              {/* ✅ Show password field when OTP is entered (4 digits) */}
+              {enteredOtp && enteredOtp.trim().length === 4 && (
                 <>
                   <input
                     type="password"

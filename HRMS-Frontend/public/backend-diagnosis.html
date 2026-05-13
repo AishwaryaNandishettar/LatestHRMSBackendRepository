@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Diagnosis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .warning { background: #fff3cd; color: #856404; }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Backend Diagnosis Tool</h1>
+    <p>This tool will help diagnose why your backend is returning 500 errors.</p>
+
+    <div class="test-section">
+        <h3>Step 1: Check if Backend is Running</h3>
+        <button onclick="checkBackendRunning()">Check Backend Status</button>
+        <div id="backend-status"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 2: Test Basic Endpoints</h3>
+        <button onclick="testBasicEndpoints()">Test All Endpoints</button>
+        <div id="endpoint-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 3: Test with Different Ports</h3>
+        <button onclick="testDifferentPorts()">Test Ports 8080, 8082, 3000</button>
+        <div id="port-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 4: Backend Restart Instructions</h3>
+        <div class="step">
+            <strong>If backend is not running or returning errors:</strong>
+            <ol>
+                <li>Open terminal/command prompt</li>
+                <li>Navigate to: <code>e:\HRMSProject\HRMS-Backend</code></li>
+                <li>Run: <code>mvn spring-boot:run</code> or <code>./mvnw spring-boot:run</code></li>
+                <li>Wait for "Started HrmsBackendApplication" message</li>
+                <li>Backend should be running on port 8082</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>Step 5: Check Backend Logs</h3>
+        <div class="step">
+            <strong>Look for these in your backend console:</strong>
+            <ul>
+                <li>✅ "Started HrmsBackendApplication in X seconds"</li>
+                <li>✅ "Tomcat started on port(s): 8082"</li>
+                <li>❌ Any ERROR messages</li>
+                <li>❌ MongoDB connection errors</li>
+                <li>❌ Port already in use errors</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        async function checkBackendRunning() {
+            const resultDiv = document.getElementById('backend-status');
+            resultDiv.innerHTML = '<div class="info">Checking backend status...</div>';
+            
+            const endpoints = [
+                'http://localhost:8082',
+                'http://localhost:8082/api',
+                'http://localhost:8082/api/offer-templates-simple/test'
+            ];
+            
+            let results = [];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint, { 
+                        method: 'GET',
+                        timeout: 5000 
+                    });
+                    
+                    results.push({
+                        url: endpoint,
+                        status: response.status,
+                        ok: response.ok,
+                        statusText: response.statusText
+                    });
+                } catch (error) {
+                    results.push({
+                        url: endpoint,
+                        status: 'ERROR',
+                        ok: false,
+                        statusText: error.message
+                    });
+                }
+            }
+            
+            let html = '';
+            let anySuccess = false;
+            
+            results.forEach(result => {
+                const className = result.ok ? 'success' : 'error';
+                if (result.ok) anySuccess = true;
+                
+                html += `
+                    <div class="${className}">
+                        <strong>${result.url}</strong><br>
+                        Status: ${result.status} - ${result.statusText}
+                    </div>
+                `;
+            });
+            
+            if (anySuccess) {
+                html = '<div class="success">✅ Backend is running!</div>' + html;
+            } else {
+                html = '<div class="error">❌ Backend is NOT running or not accessible</div>' + html;
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+
+        async function testBasicEndpoints() {
+            const resultDiv = document.getElementById('endpoint-results');
+            resultDiv.innerHTML = '<div class="info">Testing endpoints...</div>';
+            
+            const endpoints = [
+                { url: 'http://localhost:8082/api/offer-templates-simple/test', method: 'GET', name: 'Test Endpoint' },
+                { url: 'http://localhost:8082/api/offer-templates-simple/all', method: 'GET', name: 'Get All Templates' },
+                { url: 'http://localhost:8082/api/offer-templates-simple/test-upload', method: 'POST', name: 'Test Upload Endpoint' }
+            ];
+            
+            let html = '';
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const options = {
+                        method: endpoint.method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    };
+                    
+                    const response = await fetch(endpoint.url, options);
+                    const responseText = await response.text();
+                    
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (e) {
+                        data = responseText;
+                    }
+                    
+                    const className = response.ok ? 'success' : 'error';
+                    html += `
+                        <div class="${className}">
+                            <strong>${endpoint.name}</strong><br>
+                            Status: ${response.status}<br>
+                            Response: <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } catch (error) {
+                    html += `
+                        <div class="error">
+                            <strong>${endpoint.name}</strong><br>
+                            Error: ${error.message}
+                        </div>
+                    `;
+                }
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+
+        async function testDifferentPorts() {
+            const resultDiv = document.getElementById('port-results');
+            resultDiv.innerHTML = '<div class="info">Testing different ports...</div>';
+            
+            const ports = [8080, 8082, 3000];
+            let html = '';
+            
+            for (const port of ports) {
+                try {
+                    const response = await fetch(`http://localhost:${port}`, { 
+                        method: 'GET',
+                        timeout: 3000 
+                    });
+                    
+                    html += `
+                        <div class="success">
+                            <strong>Port ${port}</strong>: ✅ Something is running<br>
+                            Status: ${response.status}
+                        </div>
+                    `;
+                } catch (error) {
+                    html += `
+                        <div class="error">
+                            <strong>Port ${port}</strong>: ❌ Nothing running<br>
+                            Error: ${error.message}
+                        </div>
+                    `;
+                }
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+
+        // Auto-run basic check on page load
+        window.onload = function() {
+            checkBackendRunning();
+        };
+    </script>
+</body>
+</html>

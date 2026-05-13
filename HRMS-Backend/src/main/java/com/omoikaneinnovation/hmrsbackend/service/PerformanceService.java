@@ -3,10 +3,12 @@ package com.omoikaneinnovation.hmrsbackend.service;
 import com.omoikaneinnovation.hmrsbackend.model.*;
 import com.omoikaneinnovation.hmrsbackend.repository.EmployeeRepository;
 import com.omoikaneinnovation.hmrsbackend.repository.PerformanceRepository;
+import com.omoikaneinnovation.hmrsbackend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -14,10 +16,12 @@ public class PerformanceService {
 
     private final PerformanceRepository repo;
     private final EmployeeRepository employeeRepo;
+    private final UserRepository userRepo;
 
-    public PerformanceService(PerformanceRepository repo, EmployeeRepository employeeRepo) {
+    public PerformanceService(PerformanceRepository repo, EmployeeRepository employeeRepo, UserRepository userRepo) {
         this.repo = repo;
         this.employeeRepo = employeeRepo;
+        this.userRepo = userRepo;
     }
 
     public Performance getByEmployeeId(String empId) {
@@ -28,6 +32,21 @@ public class PerformanceService {
         return repo.findAll();
     }
 
+    // ── GET PERFORMANCE BY MANAGER (only team members) ──
+    public List<Performance> getPerformanceByManager(String managerEmail) {
+        // Get all team members under this manager
+        List<User> team = userRepo.findByManagerEmail(managerEmail);
+        
+        // Extract their employee IDs
+        List<String> teamEmpIds = team.stream()
+                .map(User::getEmployeeId)
+                .filter(id -> id != null && !id.isBlank())
+                .collect(Collectors.toList());
+        
+        // Get performance records for team members
+        return repo.findByEmployeeIdIn(teamEmpIds);
+    }
+
     public Performance save(Performance performance) {
         // upsert: if record exists for this employeeId, update it
         repo.findByEmployeeId(performance.getEmployeeId())
@@ -36,57 +55,130 @@ public class PerformanceService {
     }
 
     /**
-     * Seed sample performance data for testing
+     * Seed sample performance data — scoped to the logged-in user's context:
+     * - Manager: seeds only their direct team members
+     * - Admin/HR: seeds first 3 active employees
+     * - Employee: seeds only their own record
      */
-    public String seedSampleData() {
+    public String seedSampleData(String callerEmail, String callerRole) {
         try {
-            List<Employee> employees = employeeRepo.findAll();
-            System.out.println("Found " + employees.size() + " total employees");
+            System.out.println("=== SEED DATA CALLED ===");
+            System.out.println("Caller Email: " + callerEmail);
+            System.out.println("Caller Role: " + callerRole);
             
-            // Filter active employees
-            List<Employee> activeEmployees = employees.stream()
-                .filter(e -> "ACTIVE".equalsIgnoreCase(e.getStatus()))
-                .limit(3) // Take first 3 active employees
-                .collect(Collectors.toList());
+            List<Employee> candidates;
 
-            System.out.println("Found " + activeEmployees.size() + " active employees");
+            if ("MANAGER".equalsIgnoreCase(callerRole)) {
+                // Manager: seed only their direct reports (from User collection)
+                System.out.println("Manager role detected - finding team members...");
+                List<User> team = userRepo.findByManagerEmail(callerEmail);
+                System.out.println("Found " + team.size() + " team members in User collection");
+                
+                candidates = new java.util.ArrayList<>();
+                for (User u : team) {
+                    System.out.println("  Team member: " + u.getEmail() + " (employeeId: " + u.getEmployeeId() + ")");
+                    
+                    // Try to find Employee record by email
+                    Optional<Employee> empByEmail = employeeRepo.findByEmail(u.getEmail());
+                    if (empByEmail.isPresent()) {
+                        System.out.println("    Found in Employee collection");
+                        candidates.add(empByEmail.get());
+                    } else if (u.getEmployeeId() != null && !u.getEmployeeId().isBlank()) {
+                        // Fall back: create a minimal Employee-like record from User data
+                        System.out.println("    Not in Employee collection, using User data");
+                        Employee synth = new Employee();
+                        synth.setEmployeeId(u.getEmployeeId());
+                        synth.setFullName(u.getName() != null ? u.getName() : u.getEmail());
+                        synth.setEmail(u.getEmail());
+                        candidates.add(synth);
+                    } else {
+                        System.out.println("    Skipping - no employeeId in User record");
+                    }
+                }
+                System.out.println("Manager " + callerEmail + " seeding for " + candidates.size() + " team members");
+            } else if ("EMPLOYEE".equalsIgnoreCase(callerRole)) {
+                // Employee: seed only their own record
+                System.out.println("Employee role detected - finding own record...");
+                candidates = new java.util.ArrayList<>();
+                Optional<Employee> empByEmail = employeeRepo.findByEmail(callerEmail);
+                if (empByEmail.isPresent()) {
+                    System.out.println("Found employee in Employee collection");
+                    candidates.add(empByEmail.get());
+                } else {
+                    // Fall back to User record
+                    System.out.println("Not found in Employee collection, checking User collection...");
+                    Optional<User> userOpt = userRepo.findByEmail(callerEmail);
+                    if (userOpt.isPresent() && userOpt.get().getEmployeeId() != null) {
+                        System.out.println("Found in User collection with employeeId: " + userOpt.get().getEmployeeId());
+                        Employee synth = new Employee();
+                        synth.setEmployeeId(userOpt.get().getEmployeeId());
+                        synth.setFullName(userOpt.get().getName() != null ? userOpt.get().getName() : callerEmail);
+                        synth.setEmail(callerEmail);
+                        candidates.add(synth);
+                    } else {
+                        System.out.println("Not found in User collection or no employeeId");
+                    }
+                }
+            } else {
+                // Admin/HR: seed first 3 active employees
+                System.out.println("Admin/HR role detected - finding active employees...");
+                candidates = employeeRepo.findAll().stream()
+                        .filter(e -> "ACTIVE".equalsIgnoreCase(e.getStatus()))
+                        .limit(3)
+                        .collect(Collectors.toList());
+                System.out.println("Found " + candidates.size() + " active employees");
+            }
 
-            if (activeEmployees.isEmpty()) {
-                return "No active employees found to seed performance data. Total employees: " + employees.size();
+            System.out.println("Total candidates for seeding: " + candidates.size());
+
+            if (candidates.isEmpty()) {
+                String msg = "No matching employees found to seed performance data for " + callerEmail;
+                System.out.println(msg);
+                return msg;
             }
 
             int seeded = 0;
-            for (Employee emp : activeEmployees) {
+            StringBuilder details = new StringBuilder();
+            for (Employee emp : candidates) {
                 String empId = emp.getEmployeeId();
-                System.out.println("Processing employee: " + emp.getFullName() + " with ID: " + empId);
-                
+                String empName = emp.getFullName();
+                System.out.println("Processing employee: " + empName + " with ID: " + empId);
+
                 if (empId == null || empId.isBlank()) {
-                    System.out.println("Skipping employee " + emp.getFullName() + " - no employeeId");
+                    System.out.println("  ❌ Skipping - no employeeId");
                     continue;
                 }
 
                 // Check if performance record already exists
-                if (repo.findByEmployeeId(empId).isPresent()) {
-                    System.out.println("Performance record already exists for " + empId);
-                    continue; // Skip if already exists
+                Optional<Performance> existing = repo.findByEmployeeId(empId);
+                if (existing.isPresent()) {
+                    System.out.println("  ⚠️ Performance record already exists for " + empId);
+                    continue;
                 }
 
-                Performance perf = createSamplePerformance(empId, emp.getFullName());
-                repo.save(perf);
+                Performance perf = createSamplePerformance(empId, empName);
+                Performance saved = repo.save(perf);
                 seeded++;
-                System.out.println("Created performance record for " + emp.getFullName());
+                System.out.println("  ✅ Created performance record with ID: " + saved.getId());
+                details.append(empName).append(" (").append(empId).append("), ");
             }
 
-            String result = "Seeded performance data for " + seeded + " employees: " + 
-                           activeEmployees.stream().map(Employee::getFullName).collect(Collectors.toList());
-            System.out.println("Seeding result: " + result);
+            String result = "Seeded performance data for " + seeded + " employee(s): " + 
+                           (details.length() > 0 ? details.substring(0, details.length() - 2) : "none");
+            System.out.println("=== SEEDING COMPLETE ===");
+            System.out.println(result);
             return result;
-            
+
         } catch (Exception e) {
-            System.err.println("Error during seeding: " + e.getMessage());
+            System.err.println("❌ Error during seeding: " + e.getMessage());
             e.printStackTrace();
             return "Error during seeding: " + e.getMessage();
         }
+    }
+
+    /** Legacy overload — seeds first 3 active employees (admin use) */
+    public String seedSampleData() {
+        return seedSampleData("", "ADMIN");
     }
 
     public String debugEmployeeData() {

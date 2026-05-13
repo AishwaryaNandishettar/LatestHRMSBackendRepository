@@ -129,6 +129,9 @@ public CorsConfigurationSource corsConfigurationSource() {
 .requestMatchers("/api/recruitment/**").permitAll()
 .requestMatchers("/api/financial/**").permitAll()
 .requestMatchers("/api/jobs/**").permitAll() 
+.requestMatchers("/api/offer-letter/**").permitAll()
+.requestMatchers("/api/offer-templates-simple/**").permitAll()
+.requestMatchers("/api/offer-templates/**").permitAll()
 .requestMatchers("/api/tasks/**").permitAll()
 .requestMatchers("/api/company").permitAll()
 .requestMatchers("/api/designations/**").permitAll()
@@ -143,7 +146,7 @@ public CorsConfigurationSource corsConfigurationSource() {
 
     // WEBSOCKET - Allow all for connection
     .requestMatchers("/socket.io/**", "/ws/**").permitAll()
-   .requestMatchers("/ws/**", "/**/ws/**", "/info/**", "/app/**", "/topic/**", "/user/**").permitAll()
+   .requestMatchers("/ws/**", "/info/**", "/app/**", "/topic/**", "/user/**").permitAll()
 
     // OPTIONS
     .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()

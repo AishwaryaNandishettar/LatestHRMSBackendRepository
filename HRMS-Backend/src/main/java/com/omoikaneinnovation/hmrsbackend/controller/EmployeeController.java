@@ -56,14 +56,29 @@ public ResponseEntity<User> createEmployee(@RequestBody EmployeeDTO dto, Princip
    @GetMapping("/all")
 public ResponseEntity<?> getAllEmployees(Principal principal) {
 
-    // TEMP FIX
-    if (principal == null) {
-        System.out.println("⚠ No user logged in, returning all employees");
-        return ResponseEntity.ok(employeeService.getAllEmployees(null));
-    }
+    try {
+        // Get the logged-in user's company ID
+        if (principal == null) {
+            System.out.println("⚠ No user logged in, returning empty list");
+            return ResponseEntity.ok(new ArrayList<>());
+        }
 
-    String email = principal.getName();
-    return ResponseEntity.ok(employeeService.getAllEmployees(email));
+        String email = principal.getName();
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found: " + email));
+
+        String companyId = user.getCompanyId();
+        System.out.println("✅ Fetching employees for company: " + companyId);
+
+        List<Employee> employees = employeeService.getAllEmployees(companyId);
+        System.out.println("✅ Found " + employees.size() + " employees");
+
+        return ResponseEntity.ok(employees);
+    } catch (Exception e) {
+        System.err.println("❌ Error fetching employees: " + e.getMessage());
+        e.printStackTrace();
+        return ResponseEntity.ok(new ArrayList<>());
+    }
 }
 
   @GetMapping("/birthdays/current-month")

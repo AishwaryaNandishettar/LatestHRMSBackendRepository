@@ -29,7 +29,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                .setAllowedOriginPatterns("*")
                 .withSockJS()
-                .setSessionCookieNeeded(false);
+                 .setSessionCookieNeeded(false);
+               
     }
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry registry) {

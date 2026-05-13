@@ -4,6 +4,8 @@ import React, { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../../Context/Authcontext";
 import { createJob, getAllJobs, updateJobStatus, updateJob } from "../../api/recruitmentApi"; // adjust path
 import { Eye } from "lucide-react";
+import OfferLetterModal from "./OfferLetterModal";
+import ReleaseOfferLetterModal from "./ReleaseOfferLetterModal"; // ✅ ADDED BACK: For releasing offer letters
 import {
   Briefcase,
   Users,
@@ -65,9 +67,13 @@ const JobTable = ({ jobs , setJobs}) => {
   const [pipelineModal, setPipelineModal] = useState(null); // job being updated in pipeline
   const [pipelineForm, setPipelineForm] = useState({
     status: '', interviewLevel: '', selectionLevel: '',
-    appliedDate: '', l1InterviewDate: '', l2InterviewDate: '',
+    appliedDate: '', l1InterviewDate: '', l2InterviewDate: '', l3InterviewDate: '', l4InterviewDate: '',
     offerDate: '', onboardingDate: ''
   });
+
+  // ── OFFER LETTER STATE ── ✅ ADDED BACK: For releasing offer letters in main table
+  const [offerLetterJob, setOfferLetterJob] = useState(null);
+ 
 const [showPostJob, setShowPostJob] = useState(false);
  
 const [formData, setFormData] = useState({
@@ -128,15 +134,6 @@ const handleSubmit = async (e) => {
   }
 };
  
-  
-
-
- 
-
-  
-
- 
-
 
   const uniqueTitles = [
     "All",
@@ -186,19 +183,7 @@ const handleSubmit = async (e) => {
             />
           </div>
 
-          {/* <div className="status-tabs">
-            {["All", "Open", "Closed"].map(s => (
-              <button
-                key={s}
-                className={`tab ${statusFilter === s ? "active" : ""}`}
-                onClick={() => setStatusFilter(s)}
-              >
-                {s}
-              </button>
-            ))}
-          </div> */}
-
-          <div className="sort">
+         <div className="sort">
             <button className="sort-btn"> ⇅ Recent ▾</button>
           </div>
         <button className="post-btn" onClick={() => setShowPostJob(true)}>
@@ -206,40 +191,7 @@ const handleSubmit = async (e) => {
 </button>
         </div>
 
-        {/* BOTTOM ROW */}
-        {/* <div className="toolbar-bottom">
-          <div>
-            <button
-              className={`chip ${deptFilter === "All" ? "active" : ""}`}
-              onClick={() => setDeptFilter("All")}
-            >
-              All
-            </button>
-            <button
-              className={`chip ${deptFilter === "IT" ? "active" : ""}`}
-              onClick={() => setDeptFilter("IT")}
-            >
-              IT
-            </button>
-            <button
-              className={`chip ${deptFilter === "Sales" ? "active" : ""}`}
-              onClick={() => setDeptFilter("Sales")}
-            >
-              Sales
-            </button>
-            <button
-              className={`chip ${deptFilter === "HR" ? "active" : ""}`}
-              onClick={() => setDeptFilter("HR")}
-            >
-              HR
-            </button>
-          </div>
-
-          <div className="right-icons">
-            <button className="icon-btn">≡</button>
-            <button className="icon-btn">☰</button>
-          </div>
-        </div> */}
+        
       </div>
 
       {/* ===== TABLE ===== */}
@@ -279,7 +231,7 @@ const handleSubmit = async (e) => {
                     Dept 
                   </span>
 
-                  {openFilter === "Dept" && (
+                  {openFilter === "department" && (
                     <FilterDropdown
                       values={["All", "IT", "Sales", "HR", "Marketing"]}
                       onSelect={setDeptFilter}
@@ -289,13 +241,10 @@ const handleSubmit = async (e) => {
                 </div>
               </th>
                <th>HR Action</th>
-             
-
               <th>Applicants</th>
              <th>Posted</th>
-
-              <th>Designation</th>
-<th>CTC</th>
+            <th>Designation</th>
+              <th>CTC</th>
   <th>
                 <div className="th-wrap">
                   <span
@@ -324,6 +273,7 @@ const handleSubmit = async (e) => {
               </th>
               
 <th>Job Description</th>
+<th>Offer Letter</th> 
             </tr>
           </thead>
 
@@ -374,6 +324,8 @@ const handleSubmit = async (e) => {
           appliedDate: job.appliedDate || '',
           l1InterviewDate: job.l1InterviewDate || '',
           l2InterviewDate: job.l2InterviewDate || '',
+          l3InterviewDate: job.l3InterviewDate || '',
+          l4InterviewDate: job.l4InterviewDate || '',
           offerDate: job.offerDate || '',
           onboardingDate: job.onboardingDate || ''
         });
@@ -403,7 +355,7 @@ const handleSubmit = async (e) => {
   {job.status === 'Interview Stage' && job.interviewLevel && (
     <div style={{ marginTop: 4 }}>
       <span style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 700 }}>
-        {job.interviewLevel === 'L1' ? 'L1 Interview' : 'L2 Interview'}
+        {job.interviewLevel === 'L1' ? 'L1 - Screening' : job.interviewLevel === 'L2' ? 'L2 - Technical' : job.interviewLevel === 'L3' ? 'L3 - Manager' : 'L4 - Executive'}
       </span>
     </div>
   )}
@@ -436,6 +388,40 @@ const handleSubmit = async (e) => {
   </button>
 </td>
 
+{/* ✅ ADDED BACK: Release Offer Letter button in main table */}
+<td>
+  {job.status === 'Selected' && (
+    <button
+      onClick={() => setOfferLetterJob(job)}
+      style={{
+        background: 'linear-gradient(135deg, #16a34a, #22c55e)',
+        color: '#fff',
+        padding: '8px 16px',
+        borderRadius: '8px',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '13px',
+        fontWeight: '600',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)',
+        transition: 'all 0.2s ease'
+      }}
+      onMouseEnter={(e) => {
+        e.target.style.transform = 'translateY(-2px)';
+        e.target.style.boxShadow = '0 4px 12px rgba(22, 163, 74, 0.4)';
+      }}
+      onMouseLeave={(e) => {
+        e.target.style.transform = 'translateY(0)';
+        e.target.style.boxShadow = '0 2px 8px rgba(22, 163, 74, 0.3)';
+      }}
+      title="Release Offer Letter"
+    >
+      📄 Release Offer Letter
+    </button>
+  )}
+</td>
 
                 </tr>
               );
@@ -445,6 +431,14 @@ const handleSubmit = async (e) => {
         </table>
          
         
+        {/* ✅ ADDED BACK: Release Offer Letter Modal in main dashboard */}
+        {offerLetterJob && (
+          <ReleaseOfferLetterModal
+            job={offerLetterJob}
+            onClose={() => setOfferLetterJob(null)}
+          />
+        )}
+
         {viewJob && (
   <div className="modal" onClick={() => setViewJob(null)}>
     <div className="modal-content" onClick={e => e.stopPropagation()} style={{maxWidth: '560px', maxHeight: '85vh', overflowY: 'auto'}}>
@@ -540,17 +534,17 @@ const handleSubmit = async (e) => {
       {pipelineForm.status === 'Interview Stage' && (
         <div style={{ marginBottom:16 }}>
           <label style={{ fontSize:13, fontWeight:600, color:'#374151', display:'block', marginBottom:6 }}>Interview Level *</label>
-          <div style={{ display:'flex', gap:10 }}>
-           {['L1', 'L2'].map(level => (
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+           {['L1', 'L2', 'L3', 'L4'].map(level => (
               <button key={level}
                 onClick={() => setPipelineForm(f => ({ ...f, interviewLevel: level }))}
                 style={{
-                  flex:1, padding:'10px', border:`2px solid ${pipelineForm.interviewLevel === level ? '#2563eb' : '#e2e8f0'}`,
+                  flex:'1 1 calc(50% - 5px)', padding:'10px', border:`2px solid ${pipelineForm.interviewLevel === level ? '#2563eb' : '#e2e8f0'}`,
                   borderRadius:8, background: pipelineForm.interviewLevel === level ? '#eff6ff' : '#fff',
                   color: pipelineForm.interviewLevel === level ? '#1d4ed8' : '#374151',
                   fontWeight:700, cursor:'pointer', fontSize:14
                 }}>
-                {level}
+                {level === 'L1' ? 'L1 - Screening' : level === 'L2' ? 'L2 - Technical' : level === 'L3' ? 'L3 - Manager' : 'L4 - Executive'}
               </button>
             ))}
           </div>
@@ -578,38 +572,76 @@ const handleSubmit = async (e) => {
         </div>
       )}
 
-      {/* Date Fields */}
+      {/* Date Fields - Conditional Visibility Based on Selection */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>
+        
+        {/* Applied Date - Always visible */}
         <div>
           <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>📅 Applied Date</label>
           <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
             value={pipelineForm.appliedDate}
             onChange={e => setPipelineForm(f => ({ ...f, appliedDate: e.target.value }))} />
         </div>
-        <div>
-          <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>🎯 L1 Interview Date</label>
-          <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
-            value={pipelineForm.l1InterviewDate}
-            onChange={e => setPipelineForm(f => ({ ...f, l1InterviewDate: e.target.value }))} />
-        </div>
-        <div>
-          <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>🎯 L2 Interview Date</label>
-          <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
-            value={pipelineForm.l2InterviewDate}
-            onChange={e => setPipelineForm(f => ({ ...f, l2InterviewDate: e.target.value }))} />
-        </div>
-        <div>
-          <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>📄 Offer Stage Date</label>
-          <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
-            value={pipelineForm.offerDate}
-            onChange={e => setPipelineForm(f => ({ ...f, offerDate: e.target.value }))} />
-        </div>
-        <div style={{ gridColumn:'1 / -1' }}>
-          <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>🚀 Onboarding Date</label>
-          <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
-            value={pipelineForm.onboardingDate}
-            onChange={e => setPipelineForm(f => ({ ...f, onboardingDate: e.target.value }))} />
-        </div>
+
+        {/* L1 Interview Date - Show only when Interview Stage is selected AND interviewLevel includes L1 */}
+        {pipelineForm.status === 'Interview Stage' && pipelineForm.interviewLevel === 'L1' && (
+          <div>
+            <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>🎯 L1 Interview Date</label>
+            <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
+              value={pipelineForm.l1InterviewDate}
+              onChange={e => setPipelineForm(f => ({ ...f, l1InterviewDate: e.target.value }))} />
+          </div>
+        )}
+
+        {/* L2 Interview Date - Show only when Interview Stage is selected AND interviewLevel includes L2 */}
+        {pipelineForm.status === 'Interview Stage' && pipelineForm.interviewLevel === 'L2' && (
+          <div>
+            <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>🎯 L2 Interview Date</label>
+            <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
+              value={pipelineForm.l2InterviewDate}
+              onChange={e => setPipelineForm(f => ({ ...f, l2InterviewDate: e.target.value }))} />
+          </div>
+        )}
+
+        {/* L3 Interview Date - Show only when Interview Stage is selected AND interviewLevel includes L3 */}
+        {pipelineForm.status === 'Interview Stage' && pipelineForm.interviewLevel === 'L3' && (
+          <div>
+            <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>🎯 L3 Interview Date</label>
+            <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
+              value={pipelineForm.l3InterviewDate || ''}
+              onChange={e => setPipelineForm(f => ({ ...f, l3InterviewDate: e.target.value }))} />
+          </div>
+        )}
+
+        {/* L4 Interview Date - Show only when Interview Stage is selected AND interviewLevel includes L4 */}
+        {pipelineForm.status === 'Interview Stage' && pipelineForm.interviewLevel === 'L4' && (
+          <div>
+            <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>🎯 L4 Interview Date</label>
+            <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
+              value={pipelineForm.l4InterviewDate || ''}
+              onChange={e => setPipelineForm(f => ({ ...f, l4InterviewDate: e.target.value }))} />
+          </div>
+        )}
+
+        {/* Offer Stage Date - Show only when Selected status AND selectionLevel is L1 or L2 */}
+        {pipelineForm.status === 'Selected' && (pipelineForm.selectionLevel === 'L1' || pipelineForm.selectionLevel === 'L2') && (
+          <div>
+            <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>📄 Offer Stage Date</label>
+            <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
+              value={pipelineForm.offerDate}
+              onChange={e => setPipelineForm(f => ({ ...f, offerDate: e.target.value }))} />
+          </div>
+        )}
+
+        {/* Onboarding Date - Show only when Selected status AND selectionLevel is L1 or L2 */}
+        {pipelineForm.status === 'Selected' && (pipelineForm.selectionLevel === 'L1' || pipelineForm.selectionLevel === 'L2') && (
+          <div style={{ gridColumn:'1 / -1' }}>
+            <label style={{ fontSize:12, fontWeight:600, color:'#64748b', display:'block', marginBottom:4 }}>🚀 Onboarding Date</label>
+            <input type="date" style={{ width:'100%', padding:'8px', border:'1px solid #d1d5db', borderRadius:6, fontSize:13, boxSizing:'border-box' }}
+              value={pipelineForm.onboardingDate}
+              onChange={e => setPipelineForm(f => ({ ...f, onboardingDate: e.target.value }))} />
+          </div>
+        )}
       </div>
 
       {/* Actions */}
@@ -780,16 +812,7 @@ const handleSubmit = async (e) => {
 )}
       </div>
 
-      
-      {/* <div style={{ textAlign: "right", marginTop: "12px" }}>
-        <button
-          className="post-btn"
-          style={{ height: "36px", fontSize: "13px" }}
-          onClick={() => window.location.href = "/recruitment/ats/open-positions"}
-        >
-          More →
-        </button>
-      </div> */}
+     
       {selectedCandidate && (
   <div className="modal-overlay">
     <div className="modal-content">

@@ -5,7 +5,7 @@ import api from "./axios";
 export const getAllEmployees = async () => {
   const response = await api.get("/api/employee/all");
   console.log("🔍 getAllEmployees API response:", response);
-  return response;
+  return response.data;
 };
 
 // ✅ GET BIRTHDAYS (ONLY THIS ONE KEEP)

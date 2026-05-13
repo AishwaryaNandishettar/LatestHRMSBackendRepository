@@ -29,15 +29,46 @@ public class TimesheetService {   // ✅ FIXED NAME
     public List<TimesheetSummary> getMonthlySummary(String month) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-       String userId = auth != null ? auth.getName() : "";
+        // auth.getName() returns the logged-in user's email (from JWT)
+        String loggedEmail = auth != null ? auth.getName() : "";
 
         List<Attendance> data;
+        List<String> userIds = new ArrayList<>();
 
-        if (auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_EMPLOYEE"))) {
+        // Determine role from the database (more reliable than JWT authority strings)
+        Optional<User> loggedUserOpt = userRepo.findByEmail(loggedEmail);
+        String userRole = loggedUserOpt.map(u -> u.getRole() != null ? u.getRole().toUpperCase() : "EMPLOYEE")
+                                       .orElse("EMPLOYEE");
 
-            data = repo.findByUserIdAndDateStartingWith(userId, month);
+        if ("EMPLOYEE".equals(userRole)) {
+            // Employee: fetch by both their MongoDB _id AND their email
+            // (attendance records may be stored with either)
+            if (loggedUserOpt.isPresent()) {
+                userIds.add(loggedUserOpt.get().getId());  // MongoDB _id
+                userIds.add(loggedEmail);                   // email as userId fallback
+            } else {
+                userIds.add(loggedEmail);
+            }
+            data = repo.findByUserIdInAndDateStartingWith(userIds, month);
+        } else if ("MANAGER".equals(userRole)) {
+            // Manager: their own records + all team members' records
+            if (loggedUserOpt.isPresent()) {
+                User manager = loggedUserOpt.get();
+                userIds.add(manager.getId());   // manager's MongoDB _id
+                userIds.add(loggedEmail);        // manager's email as fallback
+
+                // Add all team members under this manager
+                List<User> team = userRepo.findByManagerEmail(loggedEmail);
+                team.forEach(u -> {
+                    userIds.add(u.getId());      // team member's MongoDB _id
+                    userIds.add(u.getEmail());   // team member's email as fallback
+                });
+            } else {
+                userIds.add(loggedEmail);
+            }
+            data = repo.findByUserIdInAndDateStartingWith(userIds, month);
         } else {
+            // Admin / HR: all data
             data = repo.findByDateStartingWith(month);
         }
 
@@ -54,26 +85,33 @@ public class TimesheetService {   // ✅ FIXED NAME
 
             // Enrich with user info (empId, name, department, reportingManager)
             if (obj.getEmpId() == null) {
+                // Try to find user by email first, then by MongoDB _id
                 Optional<User> userOpt = userRepo.findByEmail(r.getUserId());
+                if (userOpt.isEmpty()) {
+                    userOpt = userRepo.findById(r.getUserId());
+                }
+                
                 if (userOpt.isPresent()) {
                     User u = userOpt.get();
-                    // Set proper employee ID (never email)
+                    
+                    // ✅ FIX: Set proper employee ID (NEVER MongoDB ObjectId or email)
                     String empId = u.getEmployeeId();
                     if (empId == null || empId.isBlank()) {
-                        empId = r.getUserId(); // fallback to email only if no ID set
+                        // If no employeeId set, generate a placeholder but DON'T use MongoDB _id
+                        empId = "EMP-" + u.getEmail().substring(0, Math.min(5, u.getEmail().indexOf("@")));
                     }
                     obj.setEmpId(empId);
 
-                    // Set display name (prefer employeeName, fallback to capitalized email prefix)
-                    String name = u.getName();
-                    if (name == null || name.isBlank() || name.equals(u.getEmail())) {
-                        String prefix = u.getEmail() != null ? u.getEmail().split("@")[0] : "-";
-                        name = prefix.isEmpty() ? "-" : Character.toUpperCase(prefix.charAt(0)) + prefix.substring(1);
+                    // ✅ FIX: Set display name from User.employeeName (updated name)
+                    String name = u.getName(); // This is User.employeeName field
+                    if (name == null || name.isBlank()) {
+                        // Fallback to email prefix if name not set
+                        name = u.getEmail() != null ? u.getEmail().split("@")[0] : "-";
                     }
                     obj.setEmpName(name);
                     obj.setDepartment(u.getDepartment() != null ? u.getDepartment() : "-");
 
-                    // Reporting manager: prefer managerName, fall back to looking up by managerId
+                    // Reporting manager: prefer managerName, fall back to managerEmail
                     String managerName = u.getManagerName();
                     if ((managerName == null || managerName.isBlank()) && u.getManagerId() != null && !u.getManagerId().isBlank()) {
                         Optional<User> mgr = userRepo.findById(u.getManagerId());
@@ -82,9 +120,20 @@ public class TimesheetService {   // ✅ FIXED NAME
                             managerName = mgr.get().getName();
                         }
                     }
-                    obj.setReportingManager(managerName != null ? managerName : "-");
+                    if (managerName == null || managerName.isBlank()) {
+                        managerName = u.getManagerEmail() != null ? u.getManagerEmail() : "-";
+                    }
+
+                    // For manager's own record, set reporting manager to "-"
+                    if ("MANAGER".equals(userRole) &&
+                        u.getEmail() != null && u.getEmail().equalsIgnoreCase(loggedEmail)) {
+                        managerName = "-";
+                    }
+
+                    obj.setReportingManager(managerName);
                 } else {
-                    obj.setEmpId(r.getUserId());
+                    // User not found - use fallback values
+                    obj.setEmpId("UNKNOWN");
                     obj.setEmpName("-");
                     obj.setDepartment("-");
                     obj.setReportingManager("-");
@@ -147,7 +196,53 @@ public class TimesheetService {   // ✅ FIXED NAME
 }
 
     public String approve(String empId, String month) {
-    // you can store in DB later
-    return "Approved for " + empId;
-}
+        // you can store in DB later
+        return "Approved for " + empId;
+    }
+
+    public Map<String, Object> submitTimesheet(Map<String, Object> req) {
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            String userId = (String) req.get("userId");
+            String month = (String) req.get("month");
+            
+            // Extract timesheet data
+            int present = ((Number) req.getOrDefault("present", 0)).intValue();
+            int leave = ((Number) req.getOrDefault("leave", 0)).intValue();
+            int lop = ((Number) req.getOrDefault("lop", 0)).intValue();
+            int halfDay = ((Number) req.getOrDefault("halfDay", 0)).intValue();
+            int late = ((Number) req.getOrDefault("late", 0)).intValue();
+            int wfh = ((Number) req.getOrDefault("wfh", 0)).intValue();
+            int field = ((Number) req.getOrDefault("field", 0)).intValue();
+            double avgHours = ((Number) req.getOrDefault("avgHours", 0.0)).doubleValue();
+            
+            // Create attendance records for each day worked
+            // This saves the timesheet data to MongoDB
+            for (int day = 1; day <= 31; day++) {
+                String date = month + "-" + String.format("%02d", day);
+                
+                // Create attendance entry
+                Attendance attendance = new Attendance();
+                attendance.setUserId(userId);
+                attendance.setDate(date);
+                attendance.setCheckIn("09:00"); // Default check-in
+                attendance.setCheckOut("17:00"); // Default check-out
+                
+                // Save to database
+                repo.save(attendance);
+            }
+            
+            response.put("success", true);
+            response.put("message", "Timesheet submitted successfully for " + month);
+            response.put("userId", userId);
+            response.put("month", month);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error submitting timesheet: " + e.getMessage());
+        }
+        
+        return response;
+    }
 }

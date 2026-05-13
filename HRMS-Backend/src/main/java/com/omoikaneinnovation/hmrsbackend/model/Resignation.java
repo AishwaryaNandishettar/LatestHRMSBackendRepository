@@ -20,8 +20,10 @@ public class Resignation {
     private String empId;
     private String empName;
     private String department;
+    private String doj;  // ✅ Date of Joining
+    private String tenure;  // ✅ Tenure
 
-    private String managerName;
+    private String managerName;  // ✅ Manager email
 
     private String reason;
     private String remarks;
@@ -30,7 +32,11 @@ public class Resignation {
     private String lastWorkingDay;
 
     private String status; 
-    // DRAFT, PENDING_MANAGER, PENDING_HR, COMPLETED
+    // PENDING_MANAGER, PENDING_HR, APPROVED, REJECTED
+
+    private String approvedByManager;  // ✅ Manager who approved
+    private String approvedByHR;  // ✅ HR who approved
+    private String rejectionReason;  // ✅ Reason for rejection
 
     // getters + setters
 }

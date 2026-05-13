@@ -66,6 +66,14 @@ const getUnique = (key) => {
   useEffect(() => {
     if (user?.role) {
       setRole((user.role || "").toLowerCase());
+      // Pre-fill employee data for employees
+      if ((user.role || "").toLowerCase() === "employee") {
+        setFormData(prev => ({
+          ...prev,
+          employeeName: user?.email || "",
+          employeeCode: user?.employeeCode || ""
+        }));
+      }
     }
   }, [user]);
   const suggestions =
@@ -366,7 +374,7 @@ const getUnique = (key) => {
     )}
   </select>
 
-        {role === ROLE_ADMIN && (
+        {(role === ROLE_ADMIN || role === ROLE_EMP) && (
     <button className="new-claim-btn" onClick={() => setShowForm(!showForm)}>
       + New Claim
     </button>
@@ -375,15 +383,15 @@ const getUnique = (key) => {
         )}
 
         {/* CLAIM FORM */}
-        {role === ROLE_ADMIN && showForm && (
+        {(role === ROLE_ADMIN || role === ROLE_EMP) && showForm && (
           <div className="claim-form">
             <h3>Create New Claim</h3>
 
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
                 
-                <input name="employeeName" placeholder="Employee Name *" onChange={handleInput} required />
-                <input name="employeeCode" placeholder="Employee Code *" onChange={handleInput} required />
+                <input name="employeeName" placeholder="Employee Name *" value={role === ROLE_EMP ? user?.email || "" : formData.employeeName} onChange={handleInput} required readOnly={role === ROLE_EMP} />
+                <input name="employeeCode" placeholder="Employee Code *" value={role === ROLE_EMP ? user?.employeeCode || "" : formData.employeeCode} onChange={handleInput} required readOnly={role === ROLE_EMP} />
                   <select name="relationship" onChange={handleInput} required>
     <option value="">Relationship *</option>
     <option value="Father">Father</option>

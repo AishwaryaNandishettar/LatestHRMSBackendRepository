@@ -32,21 +32,47 @@ const UpdatePayroll = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        console.log("🔄 Starting to load employees and payroll...");
+        
         // Fetch both in parallel
         const [empRes, payrollRes] = await Promise.all([
           getAllEmployees(),
           getPayrollData()
         ]);
 
-        const empList = Array.isArray(empRes) ? empRes : empRes.data;
-        const existingPayroll = Array.isArray(payrollRes.data) ? payrollRes.data : [];
+        console.log("📦 Raw empRes:", empRes);
+        console.log("📦 Raw payrollRes:", payrollRes);
+
+        // getAllEmployees returns full response object, so extract data
+        let empList = [];
+        
+        if (Array.isArray(empRes?.data)) {
+          empList = empRes.data;
+          console.log("✅ Extracted from empRes.data (array)");
+        } else if (Array.isArray(empRes?.data?.content)) {
+          empList = empRes.data.content;
+          console.log("✅ Extracted from empRes.data.content (array)");
+        } else if (Array.isArray(empRes)) {
+          empList = empRes;
+          console.log("✅ empRes is already an array");
+        } else {
+          console.warn("⚠️ Could not extract employee array from:", empRes);
+          empList = [];
+        }
+
+        const existingPayroll = Array.isArray(payrollRes?.data) ? payrollRes.data : [];
+
+        console.log("✅ Loaded employees:", empList.length);
+        console.log("✅ Loaded payroll records:", existingPayroll.length);
+        console.log("📋 Employee list:", empList);
 
         setEmployees(empList);
 
         // Build a map of existing payroll by employeeId for quick lookup
         const payrollMap = {};
         existingPayroll.forEach(p => {
-          if (p.employeeId) payrollMap[p.employeeId] = p;
+          const id = p.employeeId || p.empId;
+          if (id) payrollMap[id] = p;
         });
 
         const initial = {};
@@ -54,16 +80,25 @@ const UpdatePayroll = () => {
           // ✅ Use existing payroll values if available, otherwise default to 0
           const existing = payrollMap[emp.employeeId] || {};
 
-          initial[emp.employeeId] = {
-            
+          const empId = emp.employeeId || emp.id || emp.empId;
+          if (!empId) {
+            console.warn("⚠️ Employee has no ID:", emp);
+            return;
+          }
+
+          initial[empId] = {
             companyName: existing.companyName || "OMOIKANE INNOVATIONS PVT LTD",
-            empName: emp.fullName || existing.empName,
+            empName: emp.fullName || emp.name || existing.empName,
             department: emp.department || existing.department,
+             bankAccountNumber: emp.bankAccountNumber || existing.bankAccountNumber || "",
+  pfMemberId: emp.pfMemberId || existing.pfMemberId || "",
+  uan: emp.uan || existing.uan || "",
+  ifsc: emp.ifsc || existing.ifsc || "",
             doj: emp.doj || emp.joiningDate || existing.doj || "",
             birthDate: emp.dob || emp.birthDate || existing.birthDate || "",
             isActive: (emp.status || "").toUpperCase() === "ACTIVE" || emp.isActive === true,
             reportManager: emp.manager || existing.reportManager || "",
-             gratuity: existing.gratuity ?? 0,
+            gratuity: existing.gratuity ?? 0,
 
             // ✅ PRESERVE existing payroll values — don't reset to 0
             esi:            existing.esi            ?? 0,
@@ -72,7 +107,7 @@ const UpdatePayroll = () => {
             incentive:      existing.incentive      ?? 0,
             allowance:      existing.allowance      ?? 0,
             bonus:          existing.bonus          ?? 0,
-            variableSalary: existing.variableSalary ?? 0,  // ✅ NEW: Variable salary
+            variableSalary: existing.variableSalary ?? 0,
             basic:          existing.basic          ?? 0,
             hra:            existing.hra            ?? 0,
             deduction:      existing.deduction      ?? 0,
@@ -88,6 +123,7 @@ const UpdatePayroll = () => {
           };
         });
 
+        console.log("📊 Payroll data keys:", Object.keys(initial).length);
         setPayrollData(initial);
       } catch (err) {
         console.error("❌ Load error:", err);
@@ -107,6 +143,25 @@ const UpdatePayroll = () => {
           ...prev[emp.employeeId],
           empName: emp.empName,
           department: emp.department,
+          bankAccountNumber:
+  emp.bankAccountNumber ||
+  prev[emp.employeeId]?.bankAccountNumber ||
+  "",
+
+pfMemberId:
+  emp.pfMemberId ||
+  prev[emp.employeeId]?.pfMemberId ||
+  "",
+
+uan:
+  emp.uan ||
+  prev[emp.employeeId]?.uan ||
+  "",
+
+ifsc:
+  emp.ifsc ||
+  prev[emp.employeeId]?.ifsc ||
+  "",
           basic:          emp.basic          ?? prev[emp.employeeId]?.basic          ?? 0,
           hra:            emp.hra            ?? prev[emp.employeeId]?.hra            ?? 0,
           allowance:      emp.allowance      ?? prev[emp.employeeId]?.allowance      ?? 0,
@@ -162,22 +217,26 @@ const UpdatePayroll = () => {
   updated.paidDays = updated.workingDays - updated.lopDays;
 
   const gross =
-    updated.basic +
-    updated.hra +
-    updated.allowance +
-    updated.bonus +
-    updated.variableSalary +  // ✅ Include variable salary in gross
-    updated.incentive +
-    updated.conveyance;
+    Number(updated.basic || 0) +
+    Number(updated.hra || 0) +
+    Number(updated.allowance || 0) +
+    Number(updated.bonus || 0) +
+    Number(updated.variableSalary || 0) +  // ✅ Include variable salary in gross
+    Number(updated.incentive || 0) +
+    Number(updated.conveyance || 0);
 
   const deductions =
-    updated.pf +
-    updated.tax +
-    updated.esi +
-    updated.deduction +
-    updated.professionalTax +
-    updated.lopDeduction +
-    updated.otherDeduction;
+    Number(updated.pf || 0) +
+    Number(updated.tax || 0) +
+    Number(updated.esi || 0) +
+    Number(updated.deduction || 0) +
+    Number(updated.professionalTax || 0) +
+    Number(updated.lopDeduction || 0) +
+    Number(updated.otherDeduction || 0);
+
+  // ✅ SAVE CALCULATED VALUES BACK TO STATE
+  updated.gross = gross;
+  updated.net = gross - deductions;
 
   setPayrollData({
     ...payrollData,
@@ -216,6 +275,10 @@ const savePayroll = async () => {
       employeeId: id,
       empName: d.empName,
       department: d.department,
+      bankAccountNumber: d.bankAccountNumber || "",
+pfMemberId: d.pfMemberId || "",
+uan: d.uan || "",
+ifsc: d.ifsc || "",
       month,
       status: d.isActive ? "ACTIVE" : "INACTIVE",
       updatedAt: Date.now(),
@@ -327,23 +390,43 @@ const savePayroll = async () => {
         getPayrollData()
       ]);
 
-      const empList = Array.isArray(empRes) ? empRes : empRes.data;
-      const existingPayroll = Array.isArray(payrollRes.data) ? payrollRes.data : [];
+      // getAllEmployees returns full response object, so extract data
+      const empList = Array.isArray(empRes?.data) 
+        ? empRes.data 
+        : Array.isArray(empRes?.data?.content) 
+        ? empRes.data.content 
+        : Array.isArray(empRes) 
+        ? empRes 
+        : [];
+
+      const existingPayroll = Array.isArray(payrollRes?.data) ? payrollRes.data : [];
+
+      console.log("✅ Reloaded employees:", empList.length);
+      console.log("✅ Reloaded payroll records:", existingPayroll.length);
 
       setEmployees(empList);
 
       const payrollMap = {};
       existingPayroll.forEach(p => {
-        if (p.employeeId) payrollMap[p.employeeId] = p;
+        const id = p.employeeId || p.empId;
+        if (id) payrollMap[id] = p;
       });
 
       const initial = {};
       empList.forEach((emp) => {
         const existing = payrollMap[emp.employeeId] || {};
 
-        initial[emp.employeeId] = {
+        const empId = emp.employeeId || emp.id || emp.empId;
+        if (!empId) return; // skip invalid
+
+        initial[empId] = {
           companyName: existing.companyName || "OMOIKANE INNOVATIONS PVT LTD",
-          empName: emp.fullName || existing.empName,
+          empName:
+            emp.fullName ||
+            emp.name ||
+            emp.empName ||
+            existing.empName ||
+            "N/A",
           department: emp.department || existing.department,
           doj: emp.doj || emp.joiningDate || existing.doj || "",
           birthDate: emp.dob || emp.birthDate || existing.birthDate || "",
@@ -439,6 +522,10 @@ const savePayroll = async () => {
               <th>Birth Date</th>
 <th>Status</th>
               <th>Report Manager</th>
+              <th>Bank Account No</th>
+<th>PF Member ID</th>
+<th>UAN</th>
+<th>IFSC</th>
               <th>ESI</th>
               <th>PF</th>
               <th>Tax</th>
@@ -492,7 +579,33 @@ const savePayroll = async () => {
             onChange={(e) => updateField(id, "reportManager", e.target.value)}
           />
         </td>
+<td>
+  <input
+    value={d.bankAccountNumber || ""}
+    disabled={true}
+  />
+</td>
 
+<td>
+  <input
+    value={d.pfMemberId || ""}
+    disabled={true}
+  />
+</td>
+
+<td>
+  <input
+    value={d.uan || ""}
+    disabled={true}
+  />
+</td>
+
+<td>
+  <input
+    value={d.ifsc || ""}
+    disabled={true}
+  />
+</td>
         <td>
           <input
             value={d.esi}

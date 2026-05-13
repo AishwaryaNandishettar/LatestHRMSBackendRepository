@@ -15,6 +15,7 @@ public class HelpdeskTicket {
     private String raisedByName;   // display name
     private String raisedByRole;   // EMPLOYEE / MANAGER / ADMIN
     private String attachment;
+    private String attachmentData; // base64 encoded file content for in-browser preview
 
     private String status;
     private String resolvedBy;
@@ -43,6 +44,9 @@ public class HelpdeskTicket {
 
     public String getAttachment() { return attachment; }
     public void setAttachment(String attachment) { this.attachment = attachment; }
+
+    public String getAttachmentData() { return attachmentData; }
+    public void setAttachmentData(String attachmentData) { this.attachmentData = attachmentData; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

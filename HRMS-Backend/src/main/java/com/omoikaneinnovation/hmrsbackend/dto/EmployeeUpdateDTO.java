@@ -7,6 +7,16 @@ public class EmployeeUpdateDTO {
     private String designation;
     private String email;
 
+    // Statutory / bank fields
+    private String bankAccountNumber;
+    private String ifsc;
+    private String uan;
+    private String pfMemberId;
+    private String pf;
+    private String esic;
+    private String designationChanged;
+    private String designationChangedDate;
+
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
 
@@ -21,4 +31,28 @@ public class EmployeeUpdateDTO {
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getBankAccountNumber() { return bankAccountNumber; }
+    public void setBankAccountNumber(String bankAccountNumber) { this.bankAccountNumber = bankAccountNumber; }
+
+    public String getIfsc() { return ifsc; }
+    public void setIfsc(String ifsc) { this.ifsc = ifsc; }
+
+    public String getUan() { return uan; }
+    public void setUan(String uan) { this.uan = uan; }
+
+    public String getPfMemberId() { return pfMemberId; }
+    public void setPfMemberId(String pfMemberId) { this.pfMemberId = pfMemberId; }
+
+    public String getPf() { return pf; }
+    public void setPf(String pf) { this.pf = pf; }
+
+    public String getEsic() { return esic; }
+    public void setEsic(String esic) { this.esic = esic; }
+
+    public String getDesignationChanged() { return designationChanged; }
+    public void setDesignationChanged(String designationChanged) { this.designationChanged = designationChanged; }
+
+    public String getDesignationChangedDate() { return designationChangedDate; }
+    public void setDesignationChangedDate(String designationChangedDate) { this.designationChangedDate = designationChangedDate; }
 }

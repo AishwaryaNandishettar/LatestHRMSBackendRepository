@@ -1,18 +1,21 @@
 package com.omoikaneinnovation.hmrsbackend.service;
 
 import com.omoikaneinnovation.hmrsbackend.model.Task;
+import com.omoikaneinnovation.hmrsbackend.model.User;
 import com.omoikaneinnovation.hmrsbackend.repository.TaskRepository;
+import com.omoikaneinnovation.hmrsbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TaskService {
 
     private final TaskRepository repo;
+    private final UserRepository userRepo;
 
     // ── CREATE ──
     public Task createTask(Task task) {
@@ -25,7 +28,7 @@ public class TaskService {
         return repo.save(task);
     }
 
-    // ── GET ALL (admin / manager) ──
+    // ── GET ALL (admin only) ──
     public List<Task> getAllTasks() {
         return repo.findAll();
     }
@@ -33,6 +36,31 @@ public class TaskService {
     // ── GET BY ASSIGNEE (employee) ──
     public List<Task> getTasksByAssignee(String email) {
         return repo.findByAssignee(email);
+    }
+
+    // ── GET BY MANAGER (manager sees tasks they assigned OR tasks assigned to their team) ──
+    public List<Task> getTasksByManager(String managerEmail) {
+        // Strategy 1: Get all team members under this manager (via managerEmail field on User)
+        List<User> team = userRepo.findByManagerEmail(managerEmail);
+        List<String> teamEmails = team.stream()
+                .map(User::getEmail)
+                .collect(Collectors.toList());
+
+        // Strategy 2: Also get tasks directly assigned BY this manager (assignedBy field)
+        // This ensures tasks are visible even if the employee's managerEmail field is not set
+        List<Task> assignedByManager = repo.findByAssignedBy(managerEmail);
+
+        // Collect all tasks assigned to team members
+        List<Task> teamTasks = teamEmails.isEmpty()
+                ? new java.util.ArrayList<>()
+                : repo.findByAssigneeIn(teamEmails);
+
+        // Merge both lists, avoiding duplicates by task id
+        java.util.Map<String, Task> merged = new java.util.LinkedHashMap<>();
+        for (Task t : teamTasks) merged.put(t.getId(), t);
+        for (Task t : assignedByManager) merged.put(t.getId(), t);
+
+        return new java.util.ArrayList<>(merged.values());
     }
 
     // ── GENERIC UPDATE ──

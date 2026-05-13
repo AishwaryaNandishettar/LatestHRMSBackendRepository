@@ -33,8 +33,14 @@ export default function Helpdesk() {
   /* ================= FETCH ================= */
   const fetchTickets = async () => {
     try {
-      // Pass role as query param so backend can filter
-      const res = await api.get(`/api/helpdesk?role=${role.toUpperCase()}`);
+      // Pass role and email as query params so backend can filter
+      // For managers, backend should filter to show only their team's tickets
+      const params = new URLSearchParams();
+      params.append('role', role.toUpperCase());
+      if (role === 'manager') {
+        params.append('email', userEmail);
+      }
+      const res = await api.get(`/api/helpdesk?${params.toString()}`);
       setTickets(Array.isArray(res.data) ? res.data.reverse() : []);
     } catch (err) {
       console.error("Fetch Error:", err);
@@ -58,13 +64,28 @@ export default function Helpdesk() {
     try {
       const issueValue = form.issue === "Other" ? form.customIssue : form.issue;
 
+      // If a file is attached, convert it to base64 so it can be stored and viewed later
+      let attachmentName = "-";
+      let attachmentData = null;
+
+      if (form.file) {
+        attachmentName = form.file.name;
+        attachmentData = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result); // base64 data URL
+          reader.onerror = reject;
+          reader.readAsDataURL(form.file);
+        });
+      }
+
       await api.post("/api/helpdesk", {
         issue: issueValue,
         remarks: form.remarks,
         raisedBy: userEmail,
         raisedByName: userName,
         raisedByRole: role.toUpperCase(),
-        attachment: form.file ? form.file.name : "-"
+        attachment: attachmentName,
+        attachmentData: attachmentData, // base64 string
       });
 
       alert("✅ Ticket Created Successfully!");
@@ -338,8 +359,69 @@ export default function Helpdesk() {
                     <td style={{ maxWidth: 200, fontSize: 12, color: "#374151" }}>
                       {t.remarks?.length > 60 ? t.remarks.slice(0, 60) + "..." : t.remarks}
                     </td>
-                    <td>{t.attachment !== "-" ? (
-                      <span style={{ color: "#2563eb", fontSize: 12 }}>📎 {t.attachment}</span>
+                    <td>{t.attachment && t.attachment !== "-" ? (
+                      <span
+                        style={{ color: "#2563eb", fontSize: 12, cursor: "pointer", textDecoration: "underline" }}
+                        onClick={() => {
+                          // Use stored base64 data if available (new tickets)
+                          const src = t.attachmentData || null;
+                          const ext = (t.attachment || "").split(".").pop().toLowerCase();
+                          const isImage = ["png","jpg","jpeg","gif","webp","bmp","svg"].includes(ext);
+
+                          if (!src) {
+                            // Old ticket — no base64 stored, show info message
+                            alert(`Attachment: ${t.attachment}\n\nThis attachment was uploaded before the preview feature was added. New attachments will be viewable as images.`);
+                            return;
+                          }
+
+                          // Open in a new window as a PDF-style viewer
+                          const win = window.open("", "_blank", "width=960,height=720");
+                          if (isImage) {
+                            win.document.write(`<!DOCTYPE html><html><head>
+                              <title>${t.attachment}</title>
+                              <style>
+                                *{margin:0;padding:0;box-sizing:border-box}
+                                body{background:#1a1a2e;display:flex;flex-direction:column;align-items:center;min-height:100vh;font-family:Arial,sans-serif}
+                                .toolbar{width:100%;background:#16213e;padding:12px 20px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
+                                .toolbar h3{color:#fff;font-size:14px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+                                .btn{background:#0f3460;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+                                .btn:hover{background:#e94560}
+                                .img-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;width:100%}
+                                img{max-width:100%;max-height:calc(100vh - 80px);object-fit:contain;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+                              </style></head>
+                              <body>
+                                <div class="toolbar">
+                                  <h3>📎 ${t.attachment}</h3>
+                                  <button class="btn" onclick="const a=document.createElement('a');a.href='${src}';a.download='${t.attachment}';a.click()">⬇ Download</button>
+                                  <button class="btn" onclick="window.print()">🖨 Print</button>
+                                  <button class="btn" onclick="window.close()">✕ Close</button>
+                                </div>
+                                <div class="img-wrap"><img src="${src}" alt="${t.attachment}"/></div>
+                              </body></html>`);
+                          } else {
+                            // For PDFs and other files, embed or download
+                            win.document.write(`<!DOCTYPE html><html><head>
+                              <title>${t.attachment}</title>
+                              <style>body{margin:0;font-family:Arial,sans-serif;background:#f4f6f9}
+                              .toolbar{background:#16213e;padding:12px 20px;display:flex;align-items:center;gap:12px}
+                              .toolbar h3{color:#fff;font-size:14px;flex:1}
+                              .btn{background:#0f3460;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px}
+                              embed{width:100%;height:calc(100vh - 60px)}</style></head>
+                              <body>
+                                <div class="toolbar">
+                                  <h3>📎 ${t.attachment}</h3>
+                                  <button class="btn" onclick="const a=document.createElement('a');a.href='${src}';a.download='${t.attachment}';a.click()">⬇ Download</button>
+                                  <button class="btn" onclick="window.close()">✕ Close</button>
+                                </div>
+                                <embed src="${src}" type="application/pdf"/>
+                              </body></html>`);
+                          }
+                          win.document.close();
+                        }}
+                        title={`View: ${t.attachment}`}
+                      >
+                        📎 {t.attachment}
+                      </span>
                     ) : "-"}</td>
                     <td>{t.resolvedBy !== "-" ? t.resolvedBy : "-"}</td>
                     <td>

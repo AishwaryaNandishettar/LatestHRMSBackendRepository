@@ -1,8 +1,12 @@
-      import React, { useState, useContext , useEffect} from 'react';
+      import React, { useState, useContext , useEffect, } from 'react';
+      import { useLocation } from "react-router-dom";
       import './Leave.css';
       import { AuthContext } from '../Context/Authcontext';
-      import { applyLeave, getMyLeaves, getAllLeaves, updateLeaveStatus } from "../api/leaveApi";
+      import { applyLeave, getMyLeaves, getAllLeaves, updateLeaveStatus, getManagerLeaves } from "../api/leaveApi";
+    
+      
 
+     
 
       const gmailOptions = [
         'mahesh.panchal@gmail.com',
@@ -28,7 +32,17 @@
       };
 
       const LeavePage = () => {
+
         const { user } = useContext(AuthContext);
+         const location = useLocation();
+         const [activeTab, setActiveTab] = useState("all");
+            useEffect(() => {
+  if (location.state?.focus === "pending") {
+    // example: set active tab or filter
+    setActiveTab("pending");   // or whatever you use
+  }
+}, [location.state]);
+       
         console.log("USER 👉", user);
       console.log("EMP ID 👉", user?.empId);
       const [notifiedLeaves, setNotifiedLeaves] = useState(() => {
@@ -42,7 +56,7 @@
         manager: ['manager'],
         hr: ['hr']
       };
-
+        
         const isEmployee = normalizedRole === 'employee';
       const isManager = normalizedRole === 'manager';
       const isHR = normalizedRole === 'hr';
@@ -121,27 +135,24 @@
         try {
               console.log("FETCH CALLED 👉 EMP ID:", user?.empId);
           let res;
-      if (isEmployee && user?.empId) {
-        res = await getMyLeaves(user.empId);
-      }else {
-            res = await getAllLeaves();         // admin/HR
-          }
+     if (isEmployee && user?.empId) {
+  res = await getMyLeaves(user.empId);
+
+} else if (isManager) {
+  res = await getManagerLeaves(user.email);   // ✅ ONLY HIS TEAM
+
+} else {
+  res = await getAllLeaves();   // HR only
+}
         console.log("ROLE 👉", normalizedRole);   // ✅ HERE
           console.log("API DATA 👉", res.data);     // ✅ HERE  
-          const data = res?.data || [];
-            
-          setLeaves(
+        const data = res?.data || [];
+setLeaves(
   data.map(l => ({
     ...l,
-
-    // ✅ inject from user if missing
-    department: l.department || l.dept || user?.department || user?.dept,
-
-    reportingManager:
-      l.reportingManager ||
-      l.manager ||
-      user?.reportingManager ||
-      user?.manager
+    empId: l.empId || l.userId,
+    department: l.department || l.dept || user?.department,
+    reportingManager: l.reportingManager || l.manager || user?.reportingManager
   }))
 );
 
@@ -246,7 +257,11 @@
               // ✅ ADD THESE 2 LINES ONLY
      // ✅ MAKE SURE THESE ARE NOT UNDEFINED
   department: user?.department || user?.dept,
-  reportingManager: user?.reportingManager || user?.manager
+  reportingManager: user?.reportingManager || user?.manager,
+   // ✅ ADD THIS
+ // ✅ ONLY THIS (REMOVE others)
+  managerEmail: user?.managerEmail   // MUST BE CORRECT
+
             };
 
             await applyLeave(payload);
@@ -342,12 +357,34 @@ setBalances(prev => ({
         const empName = l?.employeeName || "";
 
         // role restriction
-        let roleFilter = true;
+      let roleFilter = true;
 
-        if (isEmployee) {
-          roleFilter = String(l.userId) === String(user?.empId);
-        }
+if (isEmployee) {
+  roleFilter = String(l.userId) === String(user?.empId);
+}
 
+if (isManager) {
+  roleFilter =
+    l.managerEmail &&
+    l.managerEmail.toLowerCase() === user?.email?.toLowerCase();
+}
+         
+         const status = cleanStatus(l.status);
+          // ✅ ADD TAB FILTER
+  const tabFilter =
+    activeTab === "all" ||
+    (activeTab === "pending" && status === "pending") ||
+    (activeTab === "approved" && status === "approved") ||
+    (activeTab === "rejected" && status === "rejected");
+
+  return (
+    roleFilter &&
+    tabFilter &&
+    (filters.leaveType === "" || l?.leaveType === filters.leaveType) &&
+    (filters.status === "" || status === cleanStatus(filters.status)) &&
+    (!filters.fromDate || new Date(l.startDate || l.fromDate) >= new Date(filters.fromDate)) &&
+    (!filters.toDate || new Date(l.endDate || l.toDate) <= new Date(filters.toDate))
+  );
         // employee name filter (ONLY extra filter, don't override roleFilter)
         if (filters.employee) {
           roleFilter =
@@ -603,6 +640,35 @@ setBalances(prev => ({
       position: "relative"   // ✅ ADD THIS
     }}
   >
+             <div className="tabs">
+  <button
+    className={activeTab === "all" ? "tab active" : "tab"}
+    onClick={() => setActiveTab("all")}
+  >
+    All
+  </button>
+
+  <button
+    className={activeTab === "pending" ? "tab active" : "tab"}
+    onClick={() => setActiveTab("pending")}
+  >
+    Pending
+  </button>
+
+  <button
+    className={activeTab === "approved" ? "tab active" : "tab"}
+    onClick={() => setActiveTab("approved")}
+  >
+    Approved
+  </button>
+
+  <button
+    className={activeTab === "rejected" ? "tab active" : "tab"}
+    onClick={() => setActiveTab("rejected")}
+  >
+    Rejected
+  </button>
+</div>
               <table className="leave-table">
               <thead>
         <tr>
@@ -982,12 +1048,16 @@ setBalances(prev => ({
               {l.employeeName || l.name || l.userName || "N/A"}
             </td>
 
-            <td>{l.empId || l.userId || "—"}</td>
-
-     <td>{l.department || l.dept || l.userDepartment || "—"}</td>
+           <td>
+  {l.empId || l.userId || user?.empId || "—"}
+</td>
 
 <td>
-  {l.reportingManager || l.manager || l.reporting_manager || "—"}
+  {l.department || l.dept || user?.department || user?.dept || "—"}
+</td>
+
+<td>
+  {l.reportingManager || l.manager || user?.reportingManager || user?.manager || "—"}
 </td>
 
             <td>{l.leaveType}</td>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Input Fields</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        button {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #d1fae5;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Input Fields</h1>
+        
+        <div class="form-group">
+            <label>Template Name *</label>
+            <input 
+                type="text" 
+                id="templateName"
+                placeholder="e.g., Hero FinCorp Template"
+            />
+        </div>
+
+        <div class="form-group">
+            <label>Company Name *</label>
+            <input 
+                type="text" 
+                id="companyName"
+                placeholder="e.g., Hero FinCorp"
+            />
+        </div>
+
+        <div class="form-group">
+            <label>Description (Optional)</label>
+            <textarea 
+                id="description"
+                placeholder="Brief description of this template"
+                rows="3"
+            ></textarea>
+        </div>
+
+        <button onclick="testInputs()">Test Inputs</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function testInputs() {
+            const templateName = document.getElementById('templateName').value;
+            const companyName = document.getElementById('companyName').value;
+            const description = document.getElementById('description').value;
+
+            const result = document.getElementById('result');
+            result.style.display = 'block';
+            result.innerHTML = `
+                <h3>✅ Inputs Working!</h3>
+                <p><strong>Template Name:</strong> ${templateName || '(empty)'}</p>
+                <p><strong>Company Name:</strong> ${companyName || '(empty)'}</p>
+                <p><strong>Description:</strong> ${description || '(empty)'}</p>
+            `;
+        }
+
+        // Test if inputs are clickable
+        document.getElementById('templateName').addEventListener('click', function() {
+            console.log('✅ Template Name input clicked!');
+        });
+
+        document.getElementById('companyName').addEventListener('click', function() {
+            console.log('✅ Company Name input clicked!');
+        });
+
+        document.getElementById('description').addEventListener('click', function() {
+            console.log('✅ Description textarea clicked!');
+        });
+    </script>
+</body>
+</html>

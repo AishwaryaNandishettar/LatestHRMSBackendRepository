@@ -53,6 +53,7 @@ import PayrollDetails from "./Pages/Financial/PayrollDetails";
 import CashFlowDetails from "./Pages/Financial/CashFlowDetails";
 import { PayrollProvider } from "./Context/PayrollContext";
 
+
 /* ✅ NEW PERFORMANCE PAGE */
 import Performance from "./Pages/Performance";
 
@@ -115,7 +116,7 @@ const [showNotif, setShowNotif] = useState(false);
           <div className="page-content">
             <Routes>
               <Route path="/" element={<Navigate to="/home" replace />} />
-
+              
               <Route
                 path="/home"
                 element={
@@ -127,6 +128,16 @@ const [showNotif, setShowNotif] = useState(false);
                   </ProtectedRoute>
                 }
               />
+
+  {/* 👇 ADD EMPLOYEE ROUTE HERE */}
+  <Route
+    path="/employees"
+    element={
+      <ProtectedRoute roles={["admin", "manager", "hr"]}>
+        <EmployeeCard />
+      </ProtectedRoute>
+    }
+  />
 
               {/* ✅ PERFORMANCE ROUTE */}
               <Route

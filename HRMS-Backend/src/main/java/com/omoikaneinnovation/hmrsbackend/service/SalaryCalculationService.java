@@ -236,12 +236,26 @@ public class SalaryCalculationService {
      * @return Updated Payroll
      */
     public Payroll applySalaryCalculation(SalaryCalculationResult result) {
-        Optional<Payroll> payrollOpt = payrollRepository.findByEmployeeId(result.getEmployeeId());
-        Payroll payroll = payrollOpt.orElse(new Payroll());
+        // ✅ NEW: Search by employeeId AND month (prevents data conflicts)
+        String month = result.getMonth();
+        String employeeId = result.getEmployeeId();
+        
+        Payroll payroll = null;
+        
+        // Try to find by month first (most accurate)
+        if (month != null && !month.isEmpty()) {
+            payroll = payrollRepository.findByEmployeeIdAndMonth(employeeId, month);
+        }
+        
+        // Fallback: search by employeeId
+        if (payroll == null) {
+            Optional<Payroll> payrollOpt = payrollRepository.findByEmployeeId(employeeId);
+            payroll = payrollOpt.orElse(new Payroll());
+        }
 
         // Update with calculated values
-        payroll.setEmployeeId(result.getEmployeeId());
-        payroll.setMonth(result.getMonth());
+        payroll.setEmployeeId(employeeId);
+        payroll.setMonth(month);
         
         // Update earnings
         payroll.setBasic(result.getBasic());
@@ -267,6 +281,11 @@ public class SalaryCalculationService {
         
         // Update metadata
         payroll.setUpdatedAt(System.currentTimeMillis());
+        
+        System.out.println("✅ APPLIED SALARY CALCULATION: empId=" + employeeId + 
+                         ", month=" + month +
+                         ", gross=" + result.getGrossSalary() + 
+                         ", net=" + result.getNetSalary());
         
         return payrollRepository.save(payroll);
     }

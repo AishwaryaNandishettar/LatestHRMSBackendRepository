@@ -80,7 +80,7 @@ const fetchPayroll = async () => {
 };
 useEffect(() => {
   fetchPayroll();
-}, []);
+}, [location.state?.refresh]); // ✅ Refetch when returning from UpdatePayroll
 
 useEffect(() => {
   console.log("PAYROLL DATA:", data);
@@ -207,6 +207,7 @@ console.log("  user object:", user);
 console.log("  user?.role:", user?.role);
 console.log("  user?.empId:", user?.empId);
 console.log("  user?.employeeId:", user?.employeeId);
+console.log("  user?.email:", user?.email);
 
 // Only filter for EMPLOYEE role
 if (user && user.role === "employee") { // ✅ Strict check only for "employee"
@@ -224,6 +225,23 @@ if (user && user.role === "employee") { // ✅ Strict check only for "employee"
   });
   
   console.log(`✅ FILTERED DATA FOR EMPLOYEE: ${roleBasedData.length} records`);
+} else if (user && user.role === "manager") { // ✅ NEW: Filter for MANAGER role
+  console.log("🔥 MANAGER LOGIN DETECTED - Filtering payroll for team members only");
+  
+  const managerEmail = user?.email;
+  console.log(`  Manager email: ${managerEmail}`);
+  
+  roleBasedData = enrichedData.filter(emp => {
+    const empManagerEmail = emp.employee?.managerEmail;
+    
+    const isTeamMember = empManagerEmail && String(empManagerEmail).toLowerCase() === String(managerEmail).toLowerCase();
+    
+    console.log(`  Checking: "${emp.empName}" - Manager: ${empManagerEmail} vs Current: ${managerEmail} = ${isTeamMember}`);
+    
+    return isTeamMember;
+  });
+  
+  console.log(`✅ FILTERED DATA FOR MANAGER: ${roleBasedData.length} team members`);
 } else {
   console.log("👤 ADMIN/OTHER LOGIN (role=" + user?.role + ") - showing ALL payroll records");
   console.log("   Total enriched records:", enrichedData.length);
@@ -436,8 +454,8 @@ const handleExport = () => {
    sortType={sortType}
   setSortType={setSortType}
    onExport={handleExport}   // ✅ ADD THIS
-  onUpdatePayroll={user?.role === "admin" ? () => navigate("/update-payroll") : undefined}
-    onProcessAll={user?.role === "admin" ? handleProcessAll : undefined}
+  onUpdatePayroll={user?.role === "admin" || user?.role === "hr" ? () => navigate("/update-payroll") : undefined}
+    onProcessAll={user?.role === "admin" || user?.role === "hr" ? handleProcessAll : undefined}
 />
 
             <PayrollTable
@@ -445,10 +463,10 @@ const handleExport = () => {
   onViewPayslip={handleViewPayslip}
   onProfileView={handleProfileView}
     onDownloadPayslip={handleDownloadPayslip}   // ✅ ADD THIS
- onEditPayroll={user?.role === "admin" ? handleEditPayroll : undefined}
-onProcessPayroll={user?.role === "admin" ? handleProcessPayroll : undefined}
-onProcessAll={user?.role === "admin" ? handleProcessAll : undefined}
-onStatusChange={user?.role === "admin" ? handleStatusChange : undefined}
+ onEditPayroll={user?.role === "admin" || user?.role === "hr" ? handleEditPayroll : undefined}
+onProcessPayroll={user?.role === "admin" || user?.role === "hr" ? handleProcessPayroll : undefined}
+onProcessAll={user?.role === "admin" || user?.role === "hr" ? handleProcessAll : undefined}
+onStatusChange={user?.role === "admin" || user?.role === "hr" ? handleStatusChange : undefined}
 />
 
             <PayrollFooter 

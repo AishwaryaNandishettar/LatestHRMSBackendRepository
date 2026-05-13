@@ -33,6 +33,10 @@ private String managerName;
 private String hrName;
 private String companyId;
 
+// ✅ OTP fields for password reset
+private String resetOtp;
+private Long otpExpiryTime; // timestamp in milliseconds
+
  // getters & setters
     public String getStatus() {
         return status;
@@ -45,6 +49,10 @@ private String companyId;
 
 public String getManagerEmail() {
     return managerEmail;
+}
+
+public void setManagerEmail(String managerEmail) {
+    this.managerEmail = managerEmail;
 }
 
     public String getId() { return id; }
@@ -117,5 +125,12 @@ public String getCompanyId() {
 public void setCompanyId(String companyId) {
     this.companyId = companyId;
 }
+
+// ✅ OTP getters and setters
+public String getResetOtp() { return resetOtp; }
+public void setResetOtp(String resetOtp) { this.resetOtp = resetOtp; }
+
+public Long getOtpExpiryTime() { return otpExpiryTime; }
+public void setOtpExpiryTime(Long otpExpiryTime) { this.otpExpiryTime = otpExpiryTime; }
 }
 
