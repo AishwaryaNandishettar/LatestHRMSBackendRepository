@@ -152,12 +152,11 @@ const currentMonthBirthdays = useMemo(() => {
       try {
         const userRole = user.role?.toLowerCase();
         
-        if (userRole === 'employee') {
-          // Load employee-specific data
+        // ✅ Attendance % now comes from homeData.stats for ALL roles
+        // homeData is loaded by the loadHomeData useEffect which sets myAttendancePercentage
+        
+        if (userRole === 'employee' || userRole === 'manager') {
           await loadEmployeeKPIData();
-        } else if (userRole === 'manager') {
-          // Load manager-specific data
-          await loadManagerKPIData();
         }
         
         // Load last 3 months payroll for all roles
@@ -173,14 +172,8 @@ const currentMonthBirthdays = useMemo(() => {
 
     const loadEmployeeKPIData = async () => {
       try {
-        // Get employee attendance percentage
-        const attendanceData = await getMyAttendance(user.employeeId || user.id);
-        if (attendanceData && attendanceData.length > 0) {
-          const totalDays = attendanceData.length;
-          const presentDays = attendanceData.filter(att => att.checkIn && att.checkIn !== '-').length;
-          const percentage = Math.round((presentDays / totalDays) * 100);
-          setMyAttendancePercentage(percentage);
-        }
+        // ✅ Attendance % is now set from homeData.stats in the loadHomeData useEffect
+        // No need to recalculate here
 
         // Get employee leave notifications
         const leaveData = await getMyLeaves(user.employeeId || user.id);
@@ -207,17 +200,9 @@ const currentMonthBirthdays = useMemo(() => {
 
     const loadManagerKPIData = async () => {
       try {
-        // For manager, we'll use the homeData to get team statistics
+        // ✅ Manager attendance % now comes from homeData.stats (same as employee)
+        // Team leave notifications from leaveGraph
         if (homeData) {
-          // Team attendance percentage (calculated from attendance graph)
-          if (homeData.attendanceGraph && homeData.attendanceGraph.length > 0) {
-            const latestMonth = homeData.attendanceGraph[homeData.attendanceGraph.length - 1];
-            const totalDays = latestMonth.present + latestMonth.absent + latestMonth.leave;
-            const percentage = totalDays > 0 ? Math.round((latestMonth.present / totalDays) * 100) : 0;
-            setTeamAttendancePercentage(percentage);
-          }
-
-          // Team leave notifications (pending leaves for team members)
           if (homeData.leaveGraph && homeData.leaveGraph.length > 0) {
             const latestMonth = homeData.leaveGraph[homeData.leaveGraph.length - 1];
             setTeamLeaveNotifications(latestMonth.pending || 0);
@@ -361,6 +346,16 @@ const currentMonthBirthdays = useMemo(() => {
           console.log("📊 Leave users count:", data.leaveUsers?.length || 0);
           console.log("📋 Leave users data:", data.leaveUsers);
           setHomeData(data);
+
+          // ✅ Set attendance percentage from backend stats (works for ALL roles)
+          if (data.stats && data.stats.attendancePercentage !== undefined) {
+            setMyAttendancePercentage(data.stats.attendancePercentage);
+            console.log("📊 Attendance %:", data.stats.attendancePercentage, 
+              "| Working days:", data.stats.workingDays,
+              "| Checked in:", data.stats.checkedInDays,
+              "| Leaves:", data.stats.approvedLeaveDays,
+              "| Absent:", data.stats.absentDays);
+          }
 
           // Set attendance graph data
           if (data.attendanceGraph && Array.isArray(data.attendanceGraph)) {

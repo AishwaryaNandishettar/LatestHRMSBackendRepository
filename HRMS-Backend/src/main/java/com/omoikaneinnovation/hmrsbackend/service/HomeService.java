@@ -193,6 +193,93 @@ System.out.println("🔍 HomeService: Final leaveUsers count: " + leaveUsers.siz
         stats.setAvgHours(8.4);
         stats.setLeaves(2);
         
+        // ✅ Calculate accurate attendance percentage for current month
+        // Works for ALL roles: employee, manager, admin, hr
+        java.time.LocalDate now = java.time.LocalDate.now();
+        int year = now.getYear();
+        int month = now.getMonthValue();
+        
+        // Get all holiday dates from events collection for this month
+        java.util.Set<String> holidayDates = eventRepository.findAll().stream()
+            .filter(e -> "Holiday".equalsIgnoreCase(e.getType()) && e.getDate() != null)
+            .map(e -> e.getDate().length() >= 10 ? e.getDate().substring(0, 10) : e.getDate())
+            .collect(java.util.stream.Collectors.toSet());
+        
+        // Count working days in current month (exclude Sat/Sun and holidays)
+        int workingDays = 0;
+        int daysInMonth = now.lengthOfMonth();
+        java.time.LocalDate today2 = java.time.LocalDate.now();
+        for (int d = 1; d <= today2.getDayOfMonth(); d++) {
+            java.time.LocalDate date = java.time.LocalDate.of(year, month, d);
+            java.time.DayOfWeek dow = date.getDayOfWeek();
+            if (dow == java.time.DayOfWeek.SATURDAY || dow == java.time.DayOfWeek.SUNDAY) continue;
+            if (holidayDates.contains(date.toString())) continue;
+            workingDays++;
+        }
+        
+        // Get this user's attendance records for current month
+        String userEmailForStats = userRepository.findById(userId).map(User::getEmail).orElse(userId);
+        List<Attendance> myAttendance = attendanceRepository.findByUserId(userEmailForStats);
+        if (myAttendance.isEmpty() && !userId.equals(userEmailForStats)) {
+            myAttendance = attendanceRepository.findByUserId(userId);
+        }
+        String monthPrefix = String.format("%04d-%02d", year, month);
+        java.util.Set<String> checkedInDates = myAttendance.stream()
+            .filter(a -> a.getDate() != null && a.getDate().startsWith(monthPrefix))
+            .filter(a -> a.getCheckIn() != null && !a.getCheckIn().equals("-"))
+            .map(Attendance::getDate)
+            .collect(java.util.stream.Collectors.toSet());
+        
+        // Get approved leave dates for this user this month
+        List<LeaveRequest> myLeaves = leaveRepository.findByUserId(userId);
+        java.util.Set<String> approvedLeaveDates = new java.util.HashSet<>();
+        for (LeaveRequest lr : myLeaves) {
+            if (!"Approved".equalsIgnoreCase(lr.getStatus())) continue;
+            if (lr.getStartDate() == null || lr.getEndDate() == null) continue;
+            try {
+                java.time.LocalDate start = java.time.LocalDate.parse(lr.getStartDate());
+                java.time.LocalDate end = java.time.LocalDate.parse(lr.getEndDate());
+                java.time.LocalDate cur = start;
+                while (!cur.isAfter(end)) {
+                    if (cur.getYear() == year && cur.getMonthValue() == month) {
+                        approvedLeaveDates.add(cur.toString());
+                    }
+                    cur = cur.plusDays(1);
+                }
+            } catch (Exception ignored) {}
+        }
+        
+        int checkedInDays = checkedInDates.size();
+        int approvedLeaveDays = (int) approvedLeaveDates.stream()
+            .filter(d -> {
+                try {
+                    java.time.LocalDate ld = java.time.LocalDate.parse(d);
+                    java.time.DayOfWeek dow = ld.getDayOfWeek();
+                    if (dow == java.time.DayOfWeek.SATURDAY || dow == java.time.DayOfWeek.SUNDAY) return false;
+                    if (holidayDates.contains(d)) return false;
+                    return true;
+                } catch (Exception e) { return false; }
+            }).count();
+        int absentDays = Math.max(0, workingDays - checkedInDays - approvedLeaveDays);
+        double attendancePct = workingDays > 0
+            ? Math.round((checkedInDays * 100.0 / workingDays) * 10.0) / 10.0
+            : 0.0;
+        
+        stats.setWorkingDays(workingDays);
+        stats.setCheckedInDays(checkedInDays);
+        stats.setApprovedLeaveDays(approvedLeaveDays);
+        stats.setAbsentDays(absentDays);
+        stats.setAttendancePercentage(attendancePct);
+        stats.setPresentDays(checkedInDays);
+        stats.setLeaveTaken(approvedLeaveDays);
+        
+        System.out.println("📊 Attendance stats for " + userEmailForStats + 
+            ": workingDays=" + workingDays + 
+            ", checkedIn=" + checkedInDays + 
+            ", leaves=" + approvedLeaveDays + 
+            ", absent=" + absentDays + 
+            ", pct=" + attendancePct + "%");
+        
         // Add employee counts for admin/HR roles
         if (role.equalsIgnoreCase("ADMIN") || role.equalsIgnoreCase("HR") || role.equalsIgnoreCase("MANAGER")) {
             System.out.println("🔍 HomeService: Admin/HR role detected, fetching employee counts");

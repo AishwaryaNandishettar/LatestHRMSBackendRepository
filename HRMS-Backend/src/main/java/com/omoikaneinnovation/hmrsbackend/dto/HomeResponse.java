@@ -51,6 +51,13 @@ public static class Stats {
     // ✅ NEW: Leave and Payroll KPI fields
     private int leavePending;
     private double payrollTotal;
+
+    // ✅ NEW: Accurate attendance fields (working days aware)
+    private int workingDays;        // total working days this month (excl. weekends + holidays)
+    private int checkedInDays;      // days user actually checked in
+    private int absentDays;         // working days with no check-in and no approved leave
+    private int approvedLeaveDays;  // approved leave days this month
+    private double attendancePercentage; // (checkedInDays / workingDays) * 100
 }
     /* ================= SALARY ================= */
     @Data
