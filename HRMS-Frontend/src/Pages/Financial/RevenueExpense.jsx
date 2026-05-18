@@ -12,6 +12,9 @@ const data = [
 export default function RevenueExpense() {
   return (
     <div className="fd-page">
+       <button onClick={() => window.history.back()}>
+      ← Back
+    </button>
       <h2>Revenue & Expense Details</h2>
 
       <table>

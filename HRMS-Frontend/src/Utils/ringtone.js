@@ -1,5 +1,3 @@
-// Ringtone utility for incoming calls
-
 class RingtoneManager {
   constructor() {
     this.audio = null;

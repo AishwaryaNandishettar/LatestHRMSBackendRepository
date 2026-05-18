@@ -21,3 +21,7 @@ export const updateApprovedAmount = async (id, amount) => {
   const res = await axios.put(`${API}/amount/${id}?amount=${amount}`);
   return res.data;
 };
+export const getInsurancePlans = async (companyId) => {
+  const res = await axios.get(`${API}/plans/${companyId}`);
+  return res.data;
+};

@@ -38,7 +38,15 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
         if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
 
-            String authHeader = accessor.getFirstNativeHeader("Authorization");
+          String authHeader = accessor.getFirstNativeHeader("Authorization");
+
+// ✅ Fallback for SockJS (VERY IMPORTANT)
+if (authHeader == null) {
+    List<String> tokenList = accessor.getNativeHeader("token");
+    if (tokenList != null && !tokenList.isEmpty()) {
+        authHeader = "Bearer " + tokenList.get(0);
+    }
+}
             
             System.out.println("🔐 WebSocket CONNECT - Auth header: " + (authHeader != null ? "Present" : "Missing"));
 

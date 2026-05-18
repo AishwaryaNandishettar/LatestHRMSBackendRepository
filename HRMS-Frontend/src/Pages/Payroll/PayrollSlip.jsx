@@ -25,7 +25,12 @@ const PayrollSlip = ({ data }) => {
     conveyance,
     lopDeduction,
     professionalTax,
-    otherDeduction
+    otherDeduction,
+    // ✅ ADD MISSING FIELDS
+    bankAccountNumber,
+    pfMemberId,
+    uan,
+    ifsc
   } = data;
 
   // ✅ FIX: ADD THESE (missing before)
@@ -95,6 +100,23 @@ const PayrollSlip = ({ data }) => {
             <div>
               <div className="row"><span>Employee ID</span><span>{employeeId}</span></div>
               <div className="row"><span>Department</span><span>{department}</span></div>
+            </div>
+          </div>
+        </div>
+
+        {/* ✅ NEW: BANK & STATUTORY DETAILS */}
+        <div className="section-box">
+          <div className="section-title blue-title">Bank & Statutory Details</div>
+
+          <div className="grid-2">
+            <div>
+              <div className="row"><span>Bank Account No.</span><span>{bankAccountNumber || "N/A"}</span></div>
+              <div className="row"><span>IFSC Code</span><span>{ifsc || "N/A"}</span></div>
+            </div>
+
+            <div>
+              <div className="row"><span>UAN</span><span>{uan || "N/A"}</span></div>
+              <div className="row"><span>PF Member ID</span><span>{pfMemberId || "N/A"}</span></div>
             </div>
           </div>
         </div>

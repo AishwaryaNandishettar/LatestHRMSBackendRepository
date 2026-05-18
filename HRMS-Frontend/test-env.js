@@ -4,7 +4,7 @@ console.log('ENVIRONMENT VARIABLE TEST');
 console.log('='.repeat(50));
 console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
 console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
-console.log('Expected:', 'http://10.25.14.110:8082');
+console.log('Expected:', 'http://localhost:8082');
 console.log('='.repeat(50));
 
 if (import.meta.env.VITE_API_BASE_URL === 'http://10.25.14.110:8082') {

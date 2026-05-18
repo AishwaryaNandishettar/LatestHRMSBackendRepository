@@ -36,8 +36,14 @@ public class JobController {
         return service.updateStatus(id, status);
     }
 
+    // FULL UPDATE (status + level + dates)
+    @PutMapping("/update/{id}")
+    public Job updateJob(@PathVariable String id, @RequestBody Job updates) {
+        return service.updateJob(id, updates);
+    }
+
     @DeleteMapping("/{id}")
-public void deleteJob(@PathVariable String id) {
-    service.deleteJob(id);
-}
+    public void deleteJob(@PathVariable String id) {
+        service.deleteJob(id);
+    }
 }

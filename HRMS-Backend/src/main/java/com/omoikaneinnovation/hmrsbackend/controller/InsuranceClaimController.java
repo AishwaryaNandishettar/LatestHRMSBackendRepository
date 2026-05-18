@@ -3,7 +3,9 @@ package com.omoikaneinnovation.hmrsbackend.controller;
 import com.omoikaneinnovation.hmrsbackend.model.InsuranceClaim;
 import com.omoikaneinnovation.hmrsbackend.service.InsuranceClaimService;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
@@ -17,10 +19,15 @@ public class InsuranceClaimController {
         this.service = service;
     }
 
-   @PostMapping("/create")
-    public InsuranceClaim createClaim(@RequestBody InsuranceClaim claim){
+  @PostMapping("/create")
+public InsuranceClaim createClaim(@RequestBody InsuranceClaim claim) {
+    try {
         return service.createClaim(claim);
+    } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
     }
+}
 
     @GetMapping("/all")
     public List<InsuranceClaim> getAllClaims(){

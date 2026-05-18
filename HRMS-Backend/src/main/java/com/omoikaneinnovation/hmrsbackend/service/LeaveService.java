@@ -54,6 +54,9 @@ public class LeaveService {
         return "Leave status updated";
     }
 
+public List<LeaveRequest> getLeavesByManager(String managerEmail) {
+    return leaveRepository.findByManagerEmail(managerEmail);
+}
     public List<LeaveRequest> getAllLeaves() {
         return leaveRepository.findAll();
     }

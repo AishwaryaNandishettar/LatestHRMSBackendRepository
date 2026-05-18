@@ -1,25 +1,16 @@
-import axios from "axios"; // ✅ REQUIRED
+import api from "./axios"; // ✅ Use configured axios instance
 
-export const getHomeData = async (role) => {
-  const token = localStorage.getItem("token"); // ✅ get token
-
-  const res = await axios.get(`/api/home?role=${role}`, {
-    headers: {
-      Authorization: `Bearer ${token}`, // ✅ send token
-    },
-  });
-
+export const getHomeData = async (email) => {
+  const res = await api.get(`/api/home?email=${email}`);
   return res.data;
 };
 
-export const fetchHomeData = async () => {
-  const token = localStorage.getItem("token");
+export const fetchHomeData = async (email) => {
+  const res = await api.get(`/api/home/me?email=${email}`);
+  return res.data;
+};
 
-  const res = await axios.get("/api/home/me", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
+export const getEventById = async (id) => {
+  const res = await api.get(`/api/events/${id}`);
   return res.data;
 };

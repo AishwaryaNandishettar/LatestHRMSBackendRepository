@@ -1,0 +1,105 @@
+═══════════════════════════════════════════════════════════
+🚀 LOCALHOST QUICK START - COPY & PASTE COMMANDS
+═══════════════════════════════════════════════════════════
+
+STEP 1: START BACKEND (Terminal 1)
+───────────────────────────────────────────────────────────
+cd HRMS-Backend
+mvn spring-boot:run
+
+✅ Wait for: "Started HmrsBackendApplication"
+✅ Backend URL: http://localhost:8082
+
+═══════════════════════════════════════════════════════════
+
+STEP 2: START FRONTEND (Terminal 2 - NEW TERMINAL)
+───────────────────────────────────────────────────────────
+cd HRMS-Frontend
+npm run dev
+
+✅ Wait for: "Local: http://localhost:5176/"
+✅ Frontend URL: http://localhost:5176
+
+═══════════════════════════════════════════════════════════
+
+STEP 3: OPEN IN BROWSER
+───────────────────────────────────────────────────────────
+http://localhost:5176
+
+═══════════════════════════════════════════════════════════
+
+STEP 4: CREATE ADMIN USER (Browser Console - F12)
+───────────────────────────────────────────────────────────
+fetch('http://localhost:8082/api/auth/register', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    name: 'Admin User',
+    email: 'admin@hrms.com',
+    password: 'Admin@123',
+    role: 'ADMIN'
+  })
+})
+.then(r => r.json())
+.then(d => {
+  console.log('✅ User created:', d);
+  alert('✅ User created!\n\nEmail: admin@hrms.com\nPassword: Admin@123');
+})
+.catch(e => {
+  console.error('❌ Error:', e);
+  alert('❌ Error: ' + e.message);
+});
+
+═══════════════════════════════════════════════════════════
+
+STEP 5: LOGIN CREDENTIALS
+───────────────────────────────────────────────────────────
+Email: admin@hrms.com
+Password: Admin@123
+
+═══════════════════════════════════════════════════════════
+
+TROUBLESHOOTING: Clean & Rebuild Backend
+───────────────────────────────────────────────────────────
+cd HRMS-Backend
+mvn clean install
+mvn spring-boot:run
+
+═══════════════════════════════════════════════════════════
+
+TROUBLESHOOTING: Reinstall Frontend Dependencies
+───────────────────────────────────────────────────────────
+cd HRMS-Frontend
+npm install
+npm run dev
+
+═══════════════════════════════════════════════════════════
+
+TROUBLESHOOTING: Check Ports
+───────────────────────────────────────────────────────────
+netstat -ano | findstr :8082
+netstat -ano | findstr :5176
+
+If ports are in use, kill the process:
+taskkill /PID <PID_NUMBER> /F
+
+═══════════════════════════════════════════════════════════
+
+✅ CONFIGURATION ALREADY DONE:
+───────────────────────────────────────────────────────────
+✓ Frontend .env → http://localhost:8082
+✓ AuthController → Allows localhost origins
+✓ SecurityConfig → CORS configured for localhost
+✓ WebConfig → CORS mappings configured
+
+═══════════════════════════════════════════════════════════
+
+📝 IMPORTANT:
+───────────────────────────────────────────────────────────
+• Keep BOTH terminals running
+• Backend MUST start BEFORE frontend
+• Use port 8082 for backend
+• Use port 5176 for frontend
+• MongoDB Atlas is already configured
+
+═══════════════════════════════════════════════════════════

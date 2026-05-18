@@ -9,7 +9,7 @@ public class User {
     @Id
     private String id;
 
-    private String name;
+    private String employeeName;
     private String email;
     private String password; // 🔐 hashed
     private String role;
@@ -28,6 +28,14 @@ private String pf;
 private String uan;
 private String esic;
 private String status;
+private String employmentType;
+private String managerName;
+private String hrName;
+private String companyId;
+
+// ✅ OTP fields for password reset
+private String resetOtp;
+private Long otpExpiryTime; // timestamp in milliseconds
 
  // getters & setters
     public String getStatus() {
@@ -37,12 +45,21 @@ private String status;
     public void setStatus(String status) {
         this.status = status;
     }
+    private String managerEmail;
+
+public String getManagerEmail() {
+    return managerEmail;
+}
+
+public void setManagerEmail(String managerEmail) {
+    this.managerEmail = managerEmail;
+}
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+     public String getName() { return employeeName; }
+public void setName(String name) { this.employeeName = name; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
@@ -91,5 +108,29 @@ public void setUan(String uan) { this.uan = uan; }
 
 public String getEsic() { return esic; }
 public void setEsic(String esic) { this.esic = esic; }
+
+public String getEmploymentType() { return employmentType; }
+public void setEmploymentType(String employmentType) { this.employmentType = employmentType; }
+
+public String getManagerName() { return managerName; }
+public void setManagerName(String managerName) { this.managerName = managerName; }
+
+public String getHrName() { return hrName; }
+public void setHrName(String hrName) { this.hrName = hrName; }
+
+public String getCompanyId() {
+    return companyId;
+}
+
+public void setCompanyId(String companyId) {
+    this.companyId = companyId;
+}
+
+// ✅ OTP getters and setters
+public String getResetOtp() { return resetOtp; }
+public void setResetOtp(String resetOtp) { this.resetOtp = resetOtp; }
+
+public Long getOtpExpiryTime() { return otpExpiryTime; }
+public void setOtpExpiryTime(Long otpExpiryTime) { this.otpExpiryTime = otpExpiryTime; }
 }
 

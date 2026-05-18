@@ -4,15 +4,37 @@
   padding: 0;
   box-sizing: border-box;
 }
+/* ADD THIS HERE ↓↓↓ */
+body {
+  overflow-x: hidden;
+}
 
+input, button {
+  max-width: 100%;
+}
 /* ================= APP LAYOUT ================= */
 
 .app-container {
   display: flex;
-  height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   background: #f5f6fa;
   overflow: hidden; /* VERY IMPORTANT */
+}
+
+/* ================= MOBILE SIDEBAR OVERLAY ================= */
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 199;
+  }
 }
 
 /* ================= SIDEBAR WRAPPER ================= */
@@ -55,6 +77,7 @@
   height: 100vh;
   background-color: #f5f6fa;
   overflow: hidden; /* ONLY INNER SCROLL */
+  min-width: 0; /* Prevent flex child from overflowing */
 }
 
 /* ================= NAVBAR ================= */
@@ -75,7 +98,9 @@
   flex: 1;
   padding: 20px;
   overflow-y: auto; /* ONLY CONTENT SCROLLS */
+  overflow-x: auto; /* Allow horizontal scroll for wide content */
   background-color: #f5f6fa;
+  min-width: 0; /* Prevent flex child from overflowing */
 }
 
 /* Smooth scroll look */
@@ -85,4 +110,83 @@
 .page-content::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
+}
+
+
+ @media (max-width: 768px) {
+
+  .app-container {
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  /* SIDEBAR BECOMES DRAWER */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 260px;
+    height: 100dvh;
+    z-index: 999;
+    transition: 0.3s ease;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  /* CONTENT ALWAYS FULL WIDTH */
+  .content-area {
+    width: 100%;
+    min-height: 100dvh;
+  }
+
+  /* TABLE FIX */
+  table {
+    min-width: 900px;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .page-content {
+    padding: 10px;
+    overflow-x: auto;
+  }
+
+  /* OVERLAY */
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 998;
+  }
+}
+/* ================= FIX MOBILE SCROLL + VIEWPORT ================= */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Fix mobile viewport height issue (VERY IMPORTANT for Vercel + iPhone) */
+@media (max-width: 768px) {
+  .app-container {
+    min-height: 100dvh; /* better than 100vh on mobile */
+  }
+
+  .content-area {
+    min-height: 100dvh;
+  }
+
+  .page-content {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 700px; /* prevents table crushing */
+  }
 }

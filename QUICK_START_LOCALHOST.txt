@@ -1,0 +1,56 @@
+═══════════════════════════════════════════════════════════════
+  🚀 QUICK START - LOCALHOST WITH YOUR EXISTING USER
+═══════════════════════════════════════════════════════════════
+
+YOUR CREDENTIALS:
+  Email: Aishwarya@company.com
+  Password: admin123
+
+═══════════════════════════════════════════════════════════════
+
+STEP 1: OPEN TERMINAL 1 - START BACKEND
+═══════════════════════════════════════════════════════════════
+
+cd HRMS-Backend
+set MONGODB_URI=mongodb+srv://hrms_user:yWkztlbtsW7RGube@cluster0.aexpf8t.mongodb.net/Data_base_hrms?retryWrites=true&w=majority&appName=Cluster0
+set SPRING_MAIL_USERNAME=aishushettar95@gmail.com
+set SPRING_MAIL_PASSWORD=bbfskhrhtnujkokk
+set JWT_SECRET=MyFixedSecretKey123456
+mvn spring-boot:run
+
+WAIT FOR: "Tomcat started on port(s): 8082"
+
+═══════════════════════════════════════════════════════════════
+
+STEP 2: OPEN TERMINAL 2 - START FRONTEND
+═══════════════════════════════════════════════════════════════
+
+cd HRMS-Frontend
+npm run dev
+
+WAIT FOR: "Local: http://localhost:5173/"
+
+═══════════════════════════════════════════════════════════════
+
+STEP 3: OPEN BROWSER
+═══════════════════════════════════════════════════════════════
+
+Go to: http://localhost:5173
+
+Login with:
+  Email: Aishwarya@company.com
+  Password: admin123
+
+═══════════════════════════════════════════════════════════════
+
+✅ DONE! YOU SHOULD BE LOGGED IN!
+
+═══════════════════════════════════════════════════════════════
+
+IF NOT WORKING:
+1. Check backend terminal - should show "Tomcat started on port(s): 8082"
+2. Check frontend terminal - should show "Local: http://localhost:5173/"
+3. Press F12 in browser and check Console tab for errors
+4. See file: LOGIN_WITH_EXISTING_USER.md for troubleshooting
+
+═══════════════════════════════════════════════════════════════

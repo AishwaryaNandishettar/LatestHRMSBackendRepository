@@ -45,7 +45,10 @@ export default function EmployeeCostDetails() {
   return (
     <div className="rd-page">
       <h2>Employee Cost Breakdown</h2>
-
+             {/* ✅ ADD THIS */}
+    <button onClick={() => window.history.back()}>
+      ← Back
+    </button>
       <table>
         <thead>
           <tr>

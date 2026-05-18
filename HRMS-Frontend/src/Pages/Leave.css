@@ -78,7 +78,7 @@ body {
 }
 
 .leave-table th {
-  background: linear-gradient(135deg, #1d4ed8, #2563eb);
+  background: #1e3c72;   
   color: white;
   font-weight: 500;
 }
@@ -444,57 +444,216 @@ body {
   justify-content: space-between;
   gap: 6px;
 }
+/* TABLE CONTAINER FIX */
+.table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
+}
 
-/* better icon look */
+/* ✅ ADD THIS NEW LINE */
+.table-container thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+}
+
+/* ✅ IMPORTANT FIX */
+.table-container {
+  overflow: visible;   /* 🔥 THIS FIXES DROPDOWN VISIBILITY */
+}
+
+/* IMPORTANT: allow popup to overflow */
+.leave-table {
+  border-collapse: separate;
+  overflow: visible;
+}
+
+/* HEADER CELL */
+.leave-table th {
+  position: relative;
+  padding: 10px;
+  overflow: visible; /* 🔥 REQUIRED */
+}
+
+/* FILTER WRAPPER */
+.th-with-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* FILTER ICON */
 .filter-icon-btn {
-  background: black;
+  background: transparent;
   border: none;
-  color: white;
-  font-size: 10px;
-  padding: 3px 6px;
-  border-radius: 4px;
   cursor: pointer;
-}
-.filter-icon-btn:hover {
-  background: black;
+  font-size: 14px;
+  color: white;
 }
 
+/* 🔥 MAIN POPUP (EXCEL STYLE) */
 .header-filter-popup {
   position: absolute;
-  top: 35px;
-  right: 0;   /* 🔥 align to icon */
-  background: white;
+   top: auto;
+  left: auto;
+  width: 260px;
+  max-height: 300px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  z-index: 99999;
   padding: 8px;
-  z-index: 50;
-  min-width: 180px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  
+}
+.header-filter-popup {
+  position: fixed;
 }
 
-.header-filter-popup div {
-  max-height: 120px;
+/* SEARCH BOX */
+.header-filter-popup input {
+  width: 100%;
+  padding: 7px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+/* SCROLLABLE DATA LIST */
+.header-filter-popup .filter-list {
+  max-height: 200px;
   overflow-y: auto;
+}
+
+/* EACH ITEM */
+.header-filter-popup .filter-item {
+  padding: 6px 10px;
   cursor: pointer;
-  padding: 5px;
+  font-size: 13px;
   border-radius: 4px;
 }
 
-.header-filter-popup div:hover {
+/* HOVER */
+.header-filter-popup .filter-item:hover {
   background: #eef2ff;
+}
+.header-filter-popup {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  z-index: 1000;
+
+  /* 🔥 NEW FIXES */
+  width: 250px;              /* increase width */
+  max-height: 300px;         /* limit height */
+  overflow-y: auto;          /* scroll */
+  overflow-x: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  border-radius: 6px;
+}
+.filter-list {
+  max-height: 200px;
+  overflow-y: auto;
 }
 .header-filter-popup input {
   width: 100%;
   padding: 6px;
-  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.filter-item {
+  padding: 6px;
+  cursor: pointer;
+}
+
+.filter-item:hover {
+  background-color: #f0f0f0;
+}
+.header-filter-popup {
+  position: absolute;
+  background: #fff;
   border: 1px solid #ccc;
-  margin-bottom: 5px;
+  padding: 8px;
+  z-index: 1000;
+
+  max-height: 200px;   /* ✅ IMPORTANT */
+  overflow-y: auto;    /* ✅ ENABLE SCROLL */
+  min-width: 180px;
 }
-.leave-table th {
-  position: relative;   /* 🔥 REQUIRED for popup */
-  padding: 10px;
+.filter-list {
+  max-height: 150px;
+  overflow-y: auto;
 }
-.filter-icon-btn {
-  background: transparent;
+.header-filter-popup {
+  position: absolute;
+  top: 100%;              /* appear below header */
+  left: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  z-index: 9999;
+
+  width: 220px;
+
+  max-height: 250px;      /* ✅ scroll area */
+  overflow-y: auto;
+
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+th {
+  position: relative;   /* ✅ REQUIRED */
+}
+.filter-list {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.filter-item {
+  padding: 6px;
+  cursor: pointer;
+}
+
+.filter-item:hover {
+  background: #f0f0f0;
+}
+.export-btn {
+  background-color: #28a745;
   color: white;
-  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
 }
+
+.export-btn:hover {
+  background-color: #218838;
+}
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.tab {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.tab.active {
+  background: #1976d2;
+  color: white;
+  font-weight: bold;
+  border: 1px solid #1976d2;
+}
+
+

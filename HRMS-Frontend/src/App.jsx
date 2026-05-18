@@ -23,12 +23,14 @@ import Login from "./Pages/Login";
 import DebugLogin from "./Pages/DebugLogin";
 import Home from "./Pages/Home";
 import Profile from "./Pages/Profile";
+import EmployeeProfile from "./Pages/EmployeeProfile";
 import Timesheet from "./Pages/Timesheet";
 import Attendance from "./Pages/Attendance";
 import Leave from "./Pages/Leave";
 import InsuranceClaim from "./Pages/InsuranceClaim";
 import EmployeeCard from "./Pages/Emplyeecard";
 import Payroll from "./Pages/Payroll";
+import Helpdesk from "./Pages/Helpdesk"; // ✅ adjust path if different
 
 import UpdatePayroll from "./Pages/Payroll/UpdatePayroll";
 import ReimbursementForm from "./Pages/ReimbursementForm";
@@ -38,7 +40,7 @@ import CibilCheck from "./Pages/CibilCheck";
 import Onboarding from "./Pages/Onboarding";
 import OtpVerification from "./Pages/OtpVerification";
 import BGV from "./Pages/BGV";
-import TasksModule from "./Pages/Task";
+import TasksModule from "./Pages/TaskProfessional";
 import InvitePage from "./Pages/InvitePage";
 import InviteAccept from "./Pages/InviteAccept";
 import PersonalInsurance from "./Pages/PersonalInsurance";
@@ -51,6 +53,7 @@ import PayrollDetails from "./Pages/Financial/PayrollDetails";
 import CashFlowDetails from "./Pages/Financial/CashFlowDetails";
 import { PayrollProvider } from "./Context/PayrollContext";
 
+
 /* ✅ NEW PERFORMANCE PAGE */
 import Performance from "./Pages/Performance";
 
@@ -62,6 +65,11 @@ import EmployeeCostDetails from "./Pages/Reports/EmployeeCostDetails";
 
 /* Work Chat */
 import WorkChat from "./Pages/WorkChat/WorkChat";
+import JoinMeetingPage from "./Pages/WorkChat/Compo/Meetings/JoinMeetingPage";
+
+/* Event Detail */
+import EventDetail from "./Pages/EventDetail";
+
 
 /* Sticky Notes */
 import StickyNotesProvider from "./Components/StickyNotes/StickyNotesProvider";
@@ -72,15 +80,30 @@ import "./App.css";
 /* ================= APP LAYOUT ================= */
 function AppLayout() {
   const { user } = useContext(AuthContext);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // ✅ default closed on mobile
   
 const [notifications, setNotifications] = useState([]);
 const [showNotif, setShowNotif] = useState(false);
   if (!user) return <Navigate to="/" replace />;
 
+  // ✅ Detect mobile to auto-close sidebar after nav
+  const isMobile = () => window.innerWidth <= 768;
+
+  const handleMenuToggle = () => {
+    setIsSidebarOpen(prev => !prev);
+  };
+
+  const handleOverlayClick = () => {
+    setIsSidebarOpen(false);
+  };
+
   return (
     <StickyNotesProvider>
       <div className="app-container">
+        {/* ✅ Mobile overlay — closes sidebar when tapped */}
+        {isSidebarOpen && isMobile() && (
+          <div className="sidebar-overlay" onClick={handleOverlayClick} />
+        )}
         <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
         <div className="content-area">
          <Navbar
@@ -88,11 +111,12 @@ const [showNotif, setShowNotif] = useState(false);
   setNotifications={setNotifications}
   showNotif={showNotif}
   setShowNotif={setShowNotif}
+  onMenuToggle={handleMenuToggle}
 />
           <div className="page-content">
             <Routes>
               <Route path="/" element={<Navigate to="/home" replace />} />
-
+              
               <Route
                 path="/home"
                 element={
@@ -104,6 +128,16 @@ const [showNotif, setShowNotif] = useState(false);
                   </ProtectedRoute>
                 }
               />
+
+  {/* 👇 ADD EMPLOYEE ROUTE HERE */}
+  <Route
+    path="/employees"
+    element={
+      <ProtectedRoute roles={["admin", "manager", "hr"]}>
+        <EmployeeCard />
+      </ProtectedRoute>
+    }
+  />
 
               {/* ✅ PERFORMANCE ROUTE */}
               <Route
@@ -168,6 +202,7 @@ const [showNotif, setShowNotif] = useState(false);
                 }
               />
 
+    <Route path="/employee-profile" element={<EmployeeProfile />} />
               <Route
                 path="/timesheet"
                 element={
@@ -204,6 +239,7 @@ const [showNotif, setShowNotif] = useState(false);
                 }
               />
 
+<Route path="/join-meeting/:id" element={<JoinMeetingPage />} /> 
               {/* MANAGER / ADMIN */}
               <Route
                 path="/payroll"
@@ -358,6 +394,23 @@ const [showNotif, setShowNotif] = useState(false);
     </ProtectedRoute>
   }
 />
+<Route
+  path="/helpdesk"
+  element={
+    <ProtectedRoute>
+      <Helpdesk />
+    </ProtectedRoute>
+  }
+/>
+              {/* Event Detail — accessible by all roles */}
+              <Route
+                path="/events/:id"
+                element={
+                  <ProtectedRoute>
+                    <EventDetail />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </div>
         </div>

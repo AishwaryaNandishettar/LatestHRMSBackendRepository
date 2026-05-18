@@ -285,11 +285,35 @@
   position: absolute;
   top: 100%;
   left: 0;
+  background: #ffffff;
+  border: 1px solid #d0d0d0;
+  padding: 6px 0;
+  z-index: 9999;
+  width: 180px;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 6px;
+  color: #000;   /* 🔥 IMPORTANT FIX */
+}
+.filter-popup div {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #222;   /* ensures text visible */
   background: white;
-  border: 1px solid #ccc;
-  padding: 8px;
-  z-index: 10;
-  width: 150px;
+}
+.filter-popup div:hover {
+  background: #e6f2ff;
+  color: #000;
+}
+.filter-popup::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-popup::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 10px;
 }
 
 .filter-list {

@@ -1,0 +1,232 @@
+/* =====================================================
+   GLOBAL RESPONSIVE FIX
+   Fixes all pages that overflow on deployed URL.
+   Applied globally via main.jsx / index.css.
+   Does NOT change any logic or component behavior.
+   ===================================================== */
+
+/* ── 1. Prevent any flex/grid child from overflowing ── */
+.app-container,
+.content-area,
+.page-content {
+  min-width: 0;
+}
+
+/* ── 2. All grid children must not overflow ── */
+.main-grid > *,
+.bottom-grid > *,
+.chart-row > *,
+.content > *,
+.payroll-content > *,
+.fa-grid > *,
+.kpi-row > *,
+.kpiRow > *,
+.fa-kpis > *,
+.payroll-stats > *,
+.stats > *,
+.charts-grid > *,
+.kpi-grid > * {
+  min-width: 0;
+}
+
+/* ── 3. Tables: always allow horizontal scroll ── */
+.table-wrapper,
+.table-box,
+.payroll-table-wrapper,
+.table-container,
+.claim-table,
+.leave-table {
+  overflow-x: auto;
+}
+
+/* =====================================================
+   BREAKPOINT: screens ≤ 1280px (typical laptop)
+   ===================================================== */
+@media (max-width: 1280px) {
+
+  /* Home page grids */
+  .main-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .bottom-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .chart-row {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* KPI rows - allow wrapping */
+  .kpi-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Recruitment */
+  .content {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pipeline-card {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+
+  /* Payroll */
+  .payroll-content {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+  }
+
+  .payroll-right {
+    position: static !important;
+  }
+
+  /* Financial Assessment */
+  .fa-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .fa-full {
+    grid-column: span 2 !important;
+  }
+
+  .fa-span-2 {
+    grid-column: span 2 !important;
+  }
+
+  .fa-kpis {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  /* Reports */
+  .charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Performance */
+  .kpiRow {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Tasks */
+  .main {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Insurance / Reimbursement form grid */
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Payroll stats */
+  .payroll-stats {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+
+  /* Recruitment stats */
+  .stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* =====================================================
+   BREAKPOINT: screens ≤ 900px (small laptop / tablet)
+   ===================================================== */
+@media (max-width: 900px) {
+
+  /* Profile */
+  .profileContainer {
+    flex-direction: column !important;
+  }
+
+  .profileLeft {
+    width: 100% !important;
+  }
+
+  .profileGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* KPI rows collapse to 2 */
+  .kpi-row,
+  .kpiRow,
+  .fa-kpis,
+  .payroll-stats,
+  .stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Chart row stacks */
+  .chart-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Financial grid stacks */
+  .fa-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .fa-full,
+  .fa-span-2 {
+    grid-column: span 1 !important;
+  }
+
+  /* Form grids */
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Payroll toolbar wraps */
+  .payroll-toolbar {
+    flex-wrap: wrap !important;
+  }
+
+  /* Salary layout */
+  .salary-layout,
+  .dual-box,
+  .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* =====================================================
+   BREAKPOINT: screens ≤ 768px (mobile)
+   ===================================================== */
+@media (max-width: 768px) {
+
+  /* All KPI rows single column */
+  .kpi-row,
+  .kpiRow,
+  .fa-kpis,
+  .payroll-stats,
+  .stats,
+  .kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Sidebar collapses */
+  .sidebar {
+    width: 60px !important;
+  }
+
+  /* Page padding reduces */
+  .page-content {
+    padding: 10px !important;
+  }
+
+  /* Payroll slip */
+  .salary-slip {
+    width: 100% !important;
+    padding: 16px !important;
+  }
+
+  /* Insurance claim dashboard */
+  .claim-dashboard {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

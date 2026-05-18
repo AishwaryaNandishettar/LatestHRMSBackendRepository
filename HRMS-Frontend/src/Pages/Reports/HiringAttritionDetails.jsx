@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { getReports } from "../../api/ReportsApi";
 import "./ReportDetails.css";
 
+
 export default function HiringAttritionDetails() {
+
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,10 +15,11 @@ export default function HiringAttritionDetails() {
   const fetchData = async () => {
     try {
       const res = await getReports();
+       console.log("API DATA:", res.data);
       const trends = res.data.monthlyTrends || [];
       setData(trends);
     } catch (err) {
-      console.error(err);
+       console.error("FULL ERROR:", err);
       // Fallback data
       setData([
         { month: "Jan", hires: 5, exits: 2, employees: 50 },
@@ -34,9 +37,14 @@ export default function HiringAttritionDetails() {
   }
 
   return (
+    
     <div className="rd-page">
       <h2>Hiring vs Attrition Details</h2>
 
+          {/* ✅ ADD THIS */}
+    <button onClick={() => window.history.back()}>
+      ← Back
+    </button>
       <table>
         <thead>
           <tr>

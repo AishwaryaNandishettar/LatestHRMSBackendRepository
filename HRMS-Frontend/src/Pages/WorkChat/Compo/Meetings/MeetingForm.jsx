@@ -39,9 +39,14 @@ export default function MeetingForm({
   const [conflictWarnings, setConflictWarnings] = useState({});
   
   const [repeatUntil, setRepeatUntil] = useState("");
+<<<<<<< HEAD
   const [repeatCount, setRepeatCount] = useState("");
   const [selectedDays, setSelectedDays] = useState([]);
 
+=======
+const [repeatCount, setRepeatCount] = useState("");
+const [selectedDays, setSelectedDays] = useState([]);
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
   // Add Participant Modal state
   const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
   
@@ -235,8 +240,13 @@ export default function MeetingForm({
   endTime: formatDateTimeForBackend(end),
   status,
   repeat,
+<<<<<<< HEAD
   // Convert date-only "YYYY-MM-DD" to full ISO instant for backend
   repeatUntil: repeatUntil ? new Date(repeatUntil + "T23:59:59.000Z").toISOString() : null,
+=======
+
+  repeatUntil: repeatUntil || null,
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
   repeatCount: repeatCount ? parseInt(repeatCount) : null,
   daysOfWeek: repeat === "weekly" ? selectedDays : []
 };
@@ -503,6 +513,7 @@ export default function MeetingForm({
           </div>
         </div>
 
+<<<<<<< HEAD
         {repeat !== "none" && (
           <div className="form-section">
             <label className="form-label">
@@ -554,6 +565,60 @@ export default function MeetingForm({
         </div>{/* end meeting-form-body */}
 
         {/* Fixed action bar — always visible */}
+=======
+        {/* ✅ ADVANCED REPEAT OPTIONS */}
+{repeat !== "none" && (
+  <div className="form-section">
+    <label className="form-label">
+      <span className="label-icon">📅</span>
+      Repeat Settings
+    </label>
+
+    {/* Weekly Days */}
+    {repeat === "weekly" && (
+      <div className="weekdays">
+        {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`weekday-btn ${selectedDays.includes(i) ? "active" : ""}`}
+            onClick={() => {
+              setSelectedDays(prev =>
+                prev.includes(i)
+                  ? prev.filter(d => d !== i)
+                  : [...prev, i]
+              );
+            }}
+          >
+            {day}
+          </button>
+        ))}
+      </div>
+    )}
+
+    {/* Repeat Until */}
+    <input
+      type="date"
+      className="input modern-input"
+      value={repeatUntil}
+      onChange={(e) => setRepeatUntil(e.target.value)}
+      min={start ? start.split("T")[0] : undefined}
+    />
+
+    <div style={{ textAlign: "center", margin: "6px 0" }}>OR</div>
+
+    {/* Occurrences */}
+    <input
+      type="number"
+      className="input modern-input"
+      placeholder="Number of occurrences"
+      value={repeatCount}
+      onChange={(e) => setRepeatCount(e.target.value)}
+    />
+  </div>
+)}
+
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
         <div className="wc-modal-actions modern-actions">
           <button className="btn modern-btn btn-secondary" onClick={onClose}>
             <span className="btn-icon">✕</span>

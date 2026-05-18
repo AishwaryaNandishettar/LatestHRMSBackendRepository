@@ -10,6 +10,7 @@ public class TimesheetSummary {
     private String empId;
     private String empName;
     private String department;
+    private String reportingManager;
     private String month;
 
     private int present;

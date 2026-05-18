@@ -11,6 +11,9 @@ const data = [
 export default function BudgetDetails() {
   return (
     <div className="fd-page">
+       <button onClick={() => window.history.back()}>
+      ← Back
+    </button>
       <h2>Budget vs Actual</h2>
 
       <table>

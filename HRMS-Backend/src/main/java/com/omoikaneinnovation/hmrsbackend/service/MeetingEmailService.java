@@ -2,8 +2,10 @@ package com.omoikaneinnovation.hmrsbackend.service;
 
 import com.omoikaneinnovation.hmrsbackend.dto.EmailRequest;
 import com.omoikaneinnovation.hmrsbackend.model.Meeting;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class MeetingEmailService {
 
@@ -28,15 +30,18 @@ public class MeetingEmailService {
     @Value("${meeting.email.from-address}")
     private String fromAddress;
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = 
-            DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a");
+    @Value("${meeting.email.base-url:https://meet.omoikaneinnovations.com}")
+    private String meetingBaseUrl;
+
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
+            .ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a");
 
     /**
      * Send meeting invitation emails
      */
     public void sendMeetingInvitation(Meeting meeting) {
         try {
-            log.info("Sending meeting invitation for: {} to {} participants", 
+            log.info("Sending meeting invitation for: {} to {} participants",
                     meeting.getTitle(), meeting.getParticipantEmails().size());
 
             Map<String, Object> templateVariables = createMeetingTemplateVariables(meeting);
@@ -44,7 +49,7 @@ public class MeetingEmailService {
 
             EmailRequest emailRequest = EmailRequest.builder()
                     .toList(meeting.getParticipantEmails())
-                    .subject("📅 Meeting Invitation: " + meeting.getTitle())
+                    .subject("ðŸ“… Meeting Invitation: " + meeting.getTitle())
                     .templateName("meeting-invitation")
                     .templateVariables(templateVariables)
                     .emailType(EmailRequest.EmailType.MEETING_INVITATION)
@@ -64,7 +69,7 @@ public class MeetingEmailService {
      */
     public void sendMeetingUpdate(Meeting meeting, String updateReason) {
         try {
-            log.info("Sending meeting update for: {} to {} participants", 
+            log.info("Sending meeting update for: {} to {} participants",
                     meeting.getTitle(), meeting.getParticipantEmails().size());
 
             Map<String, Object> templateVariables = createMeetingTemplateVariables(meeting);
@@ -73,7 +78,7 @@ public class MeetingEmailService {
 
             EmailRequest emailRequest = EmailRequest.builder()
                     .toList(meeting.getParticipantEmails())
-                    .subject("📝 Meeting Updated: " + meeting.getTitle())
+                    .subject("ðŸ“ Meeting Updated: " + meeting.getTitle())
                     .templateName("meeting-invitation") // Reuse invitation template with update flag
                     .templateVariables(templateVariables)
                     .emailType(EmailRequest.EmailType.MEETING_UPDATE)
@@ -93,7 +98,7 @@ public class MeetingEmailService {
      */
     public void sendMeetingCancellation(Meeting meeting, String cancellationReason) {
         try {
-            log.info("Sending meeting cancellation for: {} to {} participants", 
+            log.info("Sending meeting cancellation for: {} to {} participants",
                     meeting.getTitle(), meeting.getParticipantEmails().size());
 
             // Cancel any pending reminder emails
@@ -102,11 +107,12 @@ public class MeetingEmailService {
             Map<String, Object> templateVariables = createMeetingTemplateVariables(meeting);
             templateVariables.put("cancellationReason", cancellationReason);
             templateVariables.put("cancellationTime", formatDateTime(Instant.now()));
-            templateVariables.put("rescheduleNote", "The organizer will contact you if this meeting needs to be rescheduled.");
+            templateVariables.put("rescheduleNote",
+                    "The organizer will contact you if this meeting needs to be rescheduled.");
 
             EmailRequest emailRequest = EmailRequest.builder()
                     .toList(meeting.getParticipantEmails())
-                    .subject("❌ Meeting Cancelled: " + meeting.getTitle())
+                    .subject("âŒ Meeting Cancelled: " + meeting.getTitle())
                     .templateName("meeting-cancellation")
                     .templateVariables(templateVariables)
                     .emailType(EmailRequest.EmailType.MEETING_CANCELLATION)
@@ -145,9 +151,10 @@ public class MeetingEmailService {
     /**
      * Schedule individual reminder
      */
-    private void scheduleReminder(Meeting meeting, int minutesBefore, String timeText, EmailRequest.EmailType emailType) {
+    private void scheduleReminder(Meeting meeting, int minutesBefore, String timeText,
+            EmailRequest.EmailType emailType) {
         Instant reminderTime = meeting.getStartTime().minusSeconds(minutesBefore * 60L);
-        
+
         // Don't schedule reminders for past times
         if (reminderTime.isBefore(Instant.now())) {
             log.debug("Skipping {} reminder for meeting {} - time has passed", timeText, meeting.getId());
@@ -160,7 +167,7 @@ public class MeetingEmailService {
 
         EmailRequest emailRequest = EmailRequest.builder()
                 .toList(meeting.getParticipantEmails())
-                .subject("⏰ Reminder: " + meeting.getTitle() + " starts in " + timeText)
+                .subject("â° Reminder: " + meeting.getTitle() + " starts in " + timeText)
                 .templateName("meeting-reminder")
                 .templateVariables(templateVariables)
                 .emailType(emailType)
@@ -177,7 +184,7 @@ public class MeetingEmailService {
      */
     private Map<String, Object> createMeetingTemplateVariables(Meeting meeting) {
         Map<String, Object> variables = new HashMap<>();
-        
+
         variables.put("meetingTitle", meeting.getTitle());
         variables.put("startTime", formatDateTime(meeting.getStartTime()));
         variables.put("endTime", formatTime(meeting.getEndTime()));
@@ -185,15 +192,15 @@ public class MeetingEmailService {
         variables.put("organizerEmail", meeting.getCreatedByEmail());
         variables.put("organizerName", extractNameFromEmail(meeting.getCreatedByEmail()));
         variables.put("description", meeting.getDescription());
-        variables.put("remarks", meeting.getRemarks()); // ✅ ADD REMARKS
+        variables.put("remarks", meeting.getRemarks()); // âœ… ADD REMARKS
         variables.put("meetingLink", generateMeetingLink(meeting));
-        
+
         // Filter out the organizer from participants list for display
         List<String> otherParticipants = meeting.getParticipantEmails().stream()
                 .filter(email -> !email.equals(meeting.getCreatedByEmail()))
                 .toList();
         variables.put("participants", otherParticipants);
-        
+
         return variables;
     }
 
@@ -218,10 +225,10 @@ public class MeetingEmailService {
         Duration duration = Duration.between(start, end);
         long hours = duration.toHours();
         long minutes = duration.toMinutesPart();
-        
+
         if (hours > 0) {
-            return hours + " hour" + (hours > 1 ? "s" : "") + 
-                   (minutes > 0 ? " " + minutes + " minute" + (minutes > 1 ? "s" : "") : "");
+            return hours + " hour" + (hours > 1 ? "s" : "") +
+                    (minutes > 0 ? " " + minutes + " minute" + (minutes > 1 ? "s" : "") : "");
         } else {
             return minutes + " minute" + (minutes > 1 ? "s" : "");
         }
@@ -234,25 +241,25 @@ public class MeetingEmailService {
         if (email == null || !email.contains("@")) {
             return email;
         }
-        
+
         String localPart = email.substring(0, email.indexOf("@"));
         // Convert dots and underscores to spaces
         String name = localPart.replace(".", " ").replace("_", " ");
-        
+
         // Capitalize first letter of each word
         String[] words = name.split(" ");
         StringBuilder result = new StringBuilder();
-        
+
         for (String word : words) {
             if (!word.isEmpty()) {
                 if (result.length() > 0) {
                     result.append(" ");
                 }
                 result.append(word.substring(0, 1).toUpperCase())
-                      .append(word.substring(1).toLowerCase());
+                        .append(word.substring(1).toLowerCase());
             }
         }
-        
+
         return result.toString();
     }
 
@@ -260,7 +267,8 @@ public class MeetingEmailService {
      * Generate meeting link (placeholder - implement based on your meeting system)
      */
     private String generateMeetingLink(Meeting meeting) {
-        // This is a placeholder - replace with your actual meeting link generation logic
-        return "https://meet.omoikaneinnovations.com/meeting/" + meeting.getId();
+        // This is a placeholder - replace with your actual meeting link generation
+        // logic. The app should route /join-meeting/{id} for now.
+        return meetingBaseUrl + "/join-meeting/" + meeting.getId();
     }
 }

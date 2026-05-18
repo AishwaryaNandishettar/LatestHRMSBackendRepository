@@ -1,7 +1,11 @@
 package com.omoikaneinnovation.hmrsbackend.controller;
 
+import com.omoikaneinnovation.hmrsbackend.dto.SalaryCalculationRequest;
+import com.omoikaneinnovation.hmrsbackend.dto.SalaryCalculationResult;
 import com.omoikaneinnovation.hmrsbackend.model.Payroll;
 import com.omoikaneinnovation.hmrsbackend.service.PayrollService;
+import com.omoikaneinnovation.hmrsbackend.service.SalaryCalculationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,6 +16,9 @@ import java.util.List;
 public class PayrollController {
 
     private final PayrollService service;
+    
+    @Autowired
+    private SalaryCalculationService calculationService;
 
     public PayrollController(PayrollService service){
         this.service = service;
@@ -53,5 +60,44 @@ public Payroll process(@PathVariable String empId) {
 @PutMapping("/process-all")
 public List<Payroll> processAll() {
     return service.processAllPayroll();
+}
+
+// ==================== NEW: REAL-TIME SALARY CALCULATION ENDPOINTS ====================
+
+/**
+ * Calculate salary for a single employee with real-time data
+ * POST /api/payroll/calculate
+ */
+@PostMapping("/calculate")
+public SalaryCalculationResult calculateSalary(@RequestBody SalaryCalculationRequest request) {
+    return calculationService.calculateSalary(request);
+}
+
+/**
+ * Calculate salary for all employees
+ * POST /api/payroll/calculate-all
+ */
+@PostMapping("/calculate-all")
+public List<SalaryCalculationResult> calculateAllSalaries(@RequestParam String month) {
+    return calculationService.calculateBulkSalary(month);
+}
+
+/**
+ * Calculate and apply salary (save to database)
+ * POST /api/payroll/calculate-and-apply
+ */
+@PostMapping("/calculate-and-apply")
+public Payroll calculateAndApply(@RequestBody SalaryCalculationRequest request) {
+    SalaryCalculationResult result = calculationService.calculateSalary(request);
+    return calculationService.applySalaryCalculation(result);
+}
+
+/**
+ * Preview salary calculation without saving
+ * POST /api/payroll/preview
+ */
+@PostMapping("/preview")
+public SalaryCalculationResult previewCalculation(@RequestBody SalaryCalculationRequest request) {
+    return calculationService.calculateSalary(request);
 }
 }

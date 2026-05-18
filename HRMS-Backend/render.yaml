@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: hrms-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: SPRING_MAIL_USERNAME
+        sync: false
+      - key: SPRING_MAIL_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        value: MyFixedSecretKey123456
+      - key: PORT
+        value: 8080

@@ -137,7 +137,7 @@
         <p class="subtitle">Create your first admin account to access the HRMS system</p>
         
         <div class="backend-url">
-            <strong>Backend URL:</strong> <span id="backendUrl">https://hrmsfullbackendapplication.onrender.com</span>
+            <strong>Backend URL:</strong> <span id="backendUrl">http://localhost:8082</span>
         </div>
         
         <form id="registerForm">
@@ -173,7 +173,7 @@
     </div>
 
     <script>
-        const BACKEND_URL = 'https://hrmsfullbackendapplication.onrender.com';
+        const BACKEND_URL = 'http://localhost:8082';
         document.getElementById('backendUrl').textContent = BACKEND_URL;
         
         const form = document.getElementById('registerForm');
@@ -213,7 +213,7 @@
                         User created successfully!<br>
                         <strong>Email:</strong> ${data.email}<br>
                         <strong>Role:</strong> ${data.role}<br><br>
-                        You can now login at: <a href="https://hrmsfrontendapp2.vercel.app" target="_blank">https://hrmsfrontendapp2.vercel.app</a>
+                        You can now login at: <a href="http://localhost:5173" target="_blank">http://localhost:5173</a>
                     `;
                     form.reset();
                 } else {

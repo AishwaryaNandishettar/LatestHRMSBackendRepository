@@ -39,18 +39,11 @@ public CorsConfigurationSource corsConfigurationSource() {
     config.setAllowCredentials(true);
 
     // Allow both localhost (development) and production URLs
-   config.setAllowedOrigins(List.of(
-    "http://localhost:5173",
-    "http://localhost:5176",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5176",
-    "https://hrmsbackendfullrenderingapplication.vercel.app",
-    "https://hrmsbackendfrontendapp.vercel.app",
-    "https://hrmsbackendapplication.vercel.app"
+   config.setAllowedOriginPatterns(List.of(
+    "http://localhost:*",
+    "http://127.0.0.1:*",
+    "https://*.vercel.app"
 ));
-
-   
-
     config.setAllowedHeaders(List.of("*"));
     config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
     config.setExposedHeaders(List.of("Authorization"));
@@ -66,7 +59,7 @@ public CorsConfigurationSource corsConfigurationSource() {
     public RoleHierarchy roleHierarchy() {
         RoleHierarchyImpl hierarchy = new RoleHierarchyImpl();
        hierarchy.setHierarchy(
-    "ROLE_ADMIN > ROLE_HR \n ROLE_HR > ROLE_EMPLOYEE"
+    "ROLE_ADMIN > ROLE_HR \n ROLE_HR > ROLE_MANAGER \n ROLE_MANAGER > ROLE_EMPLOYEE"
 );
         return hierarchy;
     }
@@ -86,7 +79,10 @@ public CorsConfigurationSource corsConfigurationSource() {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            .csrf(csrf -> csrf.disable())
+           .csrf(csrf -> csrf
+    .ignoringRequestMatchers("/ws/**")
+    .disable()
+)
             .cors(Customizer.withDefaults())
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -111,14 +107,15 @@ public CorsConfigurationSource corsConfigurationSource() {
     .requestMatchers("/api/admin/register", "/api/admin/login", "/api/admin/send-link/**").permitAll()
      
     // ROLE BASED APIs
-      .requestMatchers("/api/employee/create").permitAll() // ✅ ADD THIS
+      .requestMatchers("/api/employee/create").permitAll()
       .requestMatchers("/api/employee/all").permitAll()
+      .requestMatchers("/api/employee/**").hasAnyRole("ADMIN","HR","EMPLOYEE","MANAGER")
     .requestMatchers("/api/admin/**").hasRole("ADMIN")
     .requestMatchers("/api/hr/**").hasRole("HR")
-    .requestMatchers("/api/employee/**").hasAnyRole("ADMIN","HR","EMPLOYEE")
+   
     
 // ✅ ADD HERE
-.requestMatchers("/api/performance/**").hasAnyRole("ADMIN","HR","EMPLOYEE")
+.requestMatchers("/api/performance/**").hasAnyRole("ADMIN","HR","EMPLOYEE","MANAGER")
     .requestMatchers("/api/resignation/**").hasAnyRole("EMPLOYEE","HR","ADMIN")
 .requestMatchers("/api/increment/**").hasAnyRole("HR","ADMIN","EMPLOYEE")
 
@@ -132,18 +129,26 @@ public CorsConfigurationSource corsConfigurationSource() {
 .requestMatchers("/api/recruitment/**").permitAll()
 .requestMatchers("/api/financial/**").permitAll()
 .requestMatchers("/api/jobs/**").permitAll() 
+.requestMatchers("/api/offer-letter/**").permitAll()
+.requestMatchers("/api/offer-templates-simple/**").permitAll()
+.requestMatchers("/api/offer-templates/**").permitAll()
 .requestMatchers("/api/tasks/**").permitAll()
 .requestMatchers("/api/company").permitAll()
+.requestMatchers("/api/company-settings").permitAll()
+.requestMatchers("/api/company-settings/**").permitAll()
 .requestMatchers("/api/designations/**").permitAll()
 .requestMatchers("/api/departments/**").permitAll()
+.requestMatchers("/api/events/**").permitAll()
+.requestMatchers("/api/notifications/**").permitAll()
+.requestMatchers("/api/helpdesk/**").authenticated()
 
+  // ✅ CHAT APIs - Allow authenticated users
+  .requestMatchers("/api/chat/**").authenticated()
+  .requestMatchers("/api/meetings/**").authenticated()
 
-
-  // ✅ ADD THIS
-  .requestMatchers("/api/chat/users").permitAll()
-
-    // WEBSOCKET
-    .requestMatchers("/ws/**","/ws/info","/info","/app/**","/topic/**","/user/**").permitAll()
+    // WEBSOCKET - Allow all for connection
+    .requestMatchers("/socket.io/**", "/ws/**").permitAll()
+   .requestMatchers("/ws/**", "/info/**", "/app/**", "/topic/**", "/user/**").permitAll()
 
     // OPTIONS
     .requestMatchers(HttpMethod.OPTIONS,"/**").permitAll()
@@ -151,12 +156,6 @@ public CorsConfigurationSource corsConfigurationSource() {
     .anyRequest().authenticated()
 )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
-
-
-
-
-        return http.build();
+ return http.build();
     }
-
 } // <-- Closing brace

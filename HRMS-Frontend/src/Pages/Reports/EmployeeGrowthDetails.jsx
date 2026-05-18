@@ -36,7 +36,10 @@ export default function EmployeeGrowthDetails() {
   return (
     <div className="rd-page">
       <h2>Employee Growth Trend</h2>
-
+             {/* ✅ ADD THIS */}
+    <button onClick={() => window.history.back()}>
+      ← Back
+    </button>
       <table>
         <thead>
           <tr>

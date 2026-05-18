@@ -60,6 +60,10 @@ private EmailService emailService;
         user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (user.getRole() == null || user.getRole().isEmpty()) {
+    user.setRole("EMPLOYEE");
+    userRepo.save(user);
+}
         emp = employeeRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
@@ -144,7 +148,7 @@ employeeRepo.save(emp);
 
     // -------- SEND EMAIL --------
     try {
-        emailService.sendInviteEmail(email, onboardingLink, otp);
+        emailService.sendInviteEmail(email, onboardingLink, otp, "Temp@123");
         log.info("📩 Invite email sent to: {}", email);
     } catch (Exception e) {
         log.error("Email sending failed: {}", e.getMessage());

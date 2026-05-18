@@ -1,13 +1,12 @@
 .attendance-container table thead th {
-  background:blue;   /* white background */
-  color: white !important;       /* blue text */
+  background: #1e3c72;   /* 🔥 USE SAME VALUE FROM Profile.module.css */
+  color: #fff;
   font-size: 13px;
   text-transform: uppercase;
   padding: 12px;
   border: 1px solid #ddd;
-  position: relative;
-   text-align: center;        /* horizontal center */
-  vertical-align: middle;    /* vertical center */
+  text-align: center;
+  vertical-align: middle;
 }
 
 h2 {
@@ -18,10 +17,7 @@ h2 {
 .top-panel {
   display: flex;
   justify-content: space-between;
-  background: #f4f6fb;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  align-items: flex-start;   /* ✅ FIX alignment */
 }
 
 .button-group {
@@ -62,6 +58,10 @@ button {
   overflow-x: auto;
    overflow-y: visible;   /* 🔥 ADD THIS */
 }
+.table-wrapper {
+  position: relative;   /* ✅ ADD */
+  z-index: 10;          /* ✅ higher than panel */
+}
 
 table {
   width: 100%;
@@ -78,7 +78,7 @@ thead th {
   padding: 12px;
   border: 1px solid #ddd;
   position: relative;
-  z-index: 20;   /* 🔥 ADD THIS */
+  z-index: 50;   /* 🔥 ADD THIS */
 }
 
 /* header layout */
@@ -158,8 +158,13 @@ tbody td:nth-child(2) {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  align-items: flex-start;   /* ✅ prevents center shift */
 }
-
+thead input[type="date"] {
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
 input[type="date"] {
   padding: 6px;
   border-radius: 6px;
@@ -237,4 +242,66 @@ td:nth-child(12):contains("Pending") {
 .birthday-item {
   padding: 8px;
   border-bottom: 1px solid #eee;
+}
+.popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #ffffff;
+  color: #000;              /* ✅ make text visible */
+  border: 1px solid #ccc;
+  padding: 8px;
+  width: 160px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 99999;          /* ✅ VERY HIGH */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.popup .list div {
+  padding: 6px;
+  cursor: pointer;
+  color: #000;             /* ✅ ensure text visible */
+}
+
+.popup .list div:hover {
+  background: #f0f0f0;
+}
+.popup input {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  color: #000;             /* ✅ visible text */
+}
+.top-panel {
+  position: relative;   /* ✅ ADD */
+  z-index: 1;           /* ✅ LOWER than table */
+}
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px; /* IMPORTANT for mobile scroll */
+}
+
+/* Mobile tuning */
+@media (max-width: 768px) {
+  .table-wrapper {
+    overflow-x: scroll;
+  }
+
+  table {
+    min-width: 600px;
+  }
+
+  th, td {
+    font-size: 12px;
+    padding: 8px;
+    white-space: nowrap;
+  }
 }

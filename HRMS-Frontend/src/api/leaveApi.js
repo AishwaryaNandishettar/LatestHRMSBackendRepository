@@ -9,12 +9,22 @@ export const applyLeave = (data) => {
 
 // Get My Leaves
 export const getMyLeaves = (userId) => {
-  return api.get(`${BASE_URL}/my/${userId}`);
+  console.log("🔍 getMyLeaves called with userId:", userId);
+  const response = api.get(`${BASE_URL}/my/${userId}`);
+  console.log("🔍 getMyLeaves API response:", response);
+  return response;
 };
 
 // Get All Leaves (used earlier)
 export const getLeaves = () => {
-  return api.get(`${BASE_URL}/all`);
+  console.log("🔍 getLeaves called");
+  const response = api.get(`${BASE_URL}/all`);
+  console.log("🔍 getLeaves API response:", response);
+  return response;
+};
+
+export const getManagerLeaves = (email) => {
+  return api.get(`/api/leave/manager-leaves?managerEmail=${email}`);
 };
 
 // Get All Leaves (duplicate but keeping as you used it)

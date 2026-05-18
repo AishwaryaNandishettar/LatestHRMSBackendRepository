@@ -2,6 +2,7 @@ package com.omoikaneinnovation.hmrsbackend.controller;
 
 import com.omoikaneinnovation.hmrsbackend.model.Event;
 import com.omoikaneinnovation.hmrsbackend.repository.EventRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,14 @@ public class EventController {
     @GetMapping
     public List<Event> getAllEvents() {
         return eventRepository.findAll();
+    }
+
+    // ✅ GET SINGLE EVENT BY ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Event> getEventById(@PathVariable String id) {
+        return eventRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     // ✅ DELETE EVENT (optional for testing)

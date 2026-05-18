@@ -80,7 +80,7 @@ const fetchPayroll = async () => {
 };
 useEffect(() => {
   fetchPayroll();
-}, []);
+}, [location.state?.refresh]); // ✅ Refetch when returning from UpdatePayroll
 
 useEffect(() => {
   console.log("PAYROLL DATA:", data);
@@ -95,7 +95,8 @@ useEffect(() => {
   getAllEmployees()
     .then(res => {
       console.log("🔥 EMPLOYEE API RESPONSE:", res);
-      const empData = Array.isArray(res) ? res : res.data;
+      // getAllEmployees() returns response.data directly — already the array
+      const empData = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
       setEmployees(empData);
       console.log("📊 EMPLOYEE DATA SET:", empData);
     })
@@ -131,11 +132,20 @@ useEffect(() => {
 
 
 
-  useEffect(() => {
-    if (payslipData?.length && !activeEmployee) {
-      setActiveEmployee(payslipData[0]);
+ useEffect(() => {
+  // ✅ If admin login → show admin's own record first
+  if (user && data.length > 0 && !activeEmployee) {
+    const adminRecord = data.find(
+      (emp) =>
+        String(emp.employeeId) ===
+        String(user?.empId || user?.employeeId)
+    );
+
+    if (adminRecord) {
+      setActiveEmployee(adminRecord);
     }
-  }, []); // ✅ run only once
+  }
+}, [user, data]);
 
  
 useEffect(() => {
@@ -172,16 +182,18 @@ const enrichedData = data
     return true;
   })
   .map(pay => {
-    const emp = employees.find(e =>
-      String(e.employeeId) === String(pay.employeeId)
-    );
+    const emp = employees?.length
+  ? employees.find(e =>
+     String(e.employeeId || e.empId || e.code) === String(pay.employeeId || pay.empId)
+    )
+  : null;
 
     console.log(`✅ ENRICHING: ${pay.empName} (${pay.employeeId}) - Employee found: ${emp ? emp.fullName : 'NOT FOUND'}`);
 
     return {
       ...pay,
       // 🔥 FILL MISSING DATA FROM EMPLOYEE MASTER
-      empName: pay.empName || emp?.fullName,
+     empName: pay.empName || emp?.fullName || emp?.name,
       department: pay.department || emp?.department,
       employee: emp
     };
@@ -196,6 +208,7 @@ console.log("  user object:", user);
 console.log("  user?.role:", user?.role);
 console.log("  user?.empId:", user?.empId);
 console.log("  user?.employeeId:", user?.employeeId);
+console.log("  user?.email:", user?.email);
 
 // Only filter for EMPLOYEE role
 if (user && user.role === "employee") { // ✅ Strict check only for "employee"
@@ -213,14 +226,30 @@ if (user && user.role === "employee") { // ✅ Strict check only for "employee"
   });
   
   console.log(`✅ FILTERED DATA FOR EMPLOYEE: ${roleBasedData.length} records`);
+} else if (user && user.role === "manager") { // ✅ NEW: Filter for MANAGER role
+  console.log("🔥 MANAGER LOGIN DETECTED - Filtering payroll for team members only");
+  
+  const managerEmail = user?.email;
+  console.log(`  Manager email: ${managerEmail}`);
+  
+  roleBasedData = enrichedData.filter(emp => {
+    const empManagerEmail = emp.employee?.managerEmail;
+    
+    const isTeamMember = empManagerEmail && String(empManagerEmail).toLowerCase() === String(managerEmail).toLowerCase();
+    
+    console.log(`  Checking: "${emp.empName}" - Manager: ${empManagerEmail} vs Current: ${managerEmail} = ${isTeamMember}`);
+    
+    return isTeamMember;
+  });
+  
+  console.log(`✅ FILTERED DATA FOR MANAGER: ${roleBasedData.length} team members`);
 } else {
   console.log("👤 ADMIN/OTHER LOGIN (role=" + user?.role + ") - showing ALL payroll records");
   console.log("   Total enriched records:", enrichedData.length);
 }
 
 const filteredData = roleBasedData.filter((emp) => {
-  if (!emp.employeeId) return false;
-
+  // ✅ Allow records even if employeeId is null — use empName as fallback identifier
   const searchText = search?.toLowerCase() || "";
 
   const matchesSearch =
@@ -425,20 +454,19 @@ const handleExport = () => {
    sortType={sortType}
   setSortType={setSortType}
    onExport={handleExport}   // ✅ ADD THIS
-   onUpdatePayroll={() => navigate("/update-payroll")}   // ✅ ADD THIS
-    onProcessAll={handleProcessAll}   // ✅ ADD HERE
+  onUpdatePayroll={user?.role === "admin" || user?.role === "hr" ? () => navigate("/update-payroll") : undefined}
+    onProcessAll={user?.role === "admin" || user?.role === "hr" ? handleProcessAll : undefined}
 />
 
             <PayrollTable
   data={paginatedData}
   onViewPayslip={handleViewPayslip}
   onProfileView={handleProfileView}
-  onEditPayroll={handleEditPayroll}
-  onDownloadPayslip={handleDownloadPayslip}   // ✅ ADD THIS
-    onProcessPayroll={handleProcessPayroll}   // ✅ ADD THIS
-     onProcessAll={handleProcessAll}   // ✅ ADD
-     onStatusChange={handleStatusChange}   // ✅ ADD HERE
-
+    onDownloadPayslip={handleDownloadPayslip}   // ✅ ADD THIS
+ onEditPayroll={user?.role === "admin" || user?.role === "hr" ? handleEditPayroll : undefined}
+onProcessPayroll={user?.role === "admin" || user?.role === "hr" ? handleProcessPayroll : undefined}
+onProcessAll={user?.role === "admin" || user?.role === "hr" ? handleProcessAll : undefined}
+onStatusChange={user?.role === "admin" || user?.role === "hr" ? handleStatusChange : undefined}
 />
 
             <PayrollFooter 

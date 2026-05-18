@@ -17,7 +17,15 @@ public class LeaveRequest {
     private String status; // PENDING, APPROVED, REJECTED
     private String employeeName;
 
+   private String managerEmail;
 
+   public String getManagerEmail() {
+    return managerEmail;
+}
+
+public void setManagerEmail(String managerEmail) {
+    this.managerEmail = managerEmail;
+}
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }

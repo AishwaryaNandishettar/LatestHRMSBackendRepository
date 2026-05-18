@@ -33,6 +33,11 @@ export default function Onboarding() {
     pan: "",
     aadhaar: "",
     education: "",
+    bankAccountNumber: "",
+    ifsc: "",
+    uan: "",
+    pfMemberId: "",
+    esic: "",
   };
 
   const initialJob = {
@@ -48,6 +53,9 @@ export default function Onboarding() {
     currentEmployer: "",
     noticePeriod: "",
     appliedDept: "",
+    pf: "",
+    designationChanged: "",
+    designationChangedDate: "",
   };
 
   // ✅ LOAD FROM LOCALSTORAGE OR USE INITIAL STATE
@@ -389,6 +397,11 @@ export default function Onboarding() {
       pan: personal.pan,
       aadhaar: personal.aadhaar,
       education: personal.education,
+      bankAccountNumber: personal.bankAccountNumber,
+      ifsc: personal.ifsc,
+      uan: personal.uan,
+      pfMemberId: personal.pfMemberId,
+      esic: personal.esic,
     },
 
     job: {
@@ -404,6 +417,9 @@ export default function Onboarding() {
       currentEmployer: job.currentEmployer,
       noticePeriod: job.noticePeriod,
       appliedDept: job.appliedDept,
+      pf: job.pf,
+      designationChanged: job.designationChanged,
+      designationChangedDate: job.designationChangedDate,
     },
 
     experience: experience.map((ex) => ({ ...ex })),
@@ -462,6 +478,16 @@ export default function Onboarding() {
 
   dob: personal.dob,
   doj: job.joiningDate,
+
+  // Statutory / bank fields
+  bankAccountNumber: personal.bankAccountNumber,
+  ifsc: personal.ifsc,
+  uan: personal.uan,
+  pfMemberId: personal.pfMemberId,
+  esic: personal.esic,
+  pf: job.pf,
+  designationChanged: job.designationChanged,
+  designationChangedDate: job.designationChangedDate,
 
   status: "Active"
 });
@@ -694,6 +720,51 @@ export default function Onboarding() {
     />
   </div>
 
+  {/* ── Bank & Statutory Details ── */}
+  <div className="form-group" style={{ gridColumn: "1 / -1", fontWeight: 600, marginTop: 16, color: "#444", borderTop: "1px solid #ddd", paddingTop: 12 }}>
+    Bank &amp; Statutory Details
+  </div>
+
+  <div className="form-group">
+    <label>Bank Account Number</label>
+    <input
+      value={personal.bankAccountNumber}
+      onChange={(e) => updatePersonal("bankAccountNumber", e.target.value)}
+    />
+  </div>
+
+  <div className="form-group">
+    <label>IFSC Code</label>
+    <input
+      value={personal.ifsc}
+      onChange={(e) => updatePersonal("ifsc", e.target.value)}
+    />
+  </div>
+
+  <div className="form-group">
+    <label>UAN (Universal Account Number)</label>
+    <input
+      value={personal.uan}
+      onChange={(e) => updatePersonal("uan", e.target.value)}
+    />
+  </div>
+
+  <div className="form-group">
+    <label>PF Member ID</label>
+    <input
+      value={personal.pfMemberId}
+      onChange={(e) => updatePersonal("pfMemberId", e.target.value)}
+    />
+  </div>
+
+  <div className="form-group">
+    <label>ESIC Number</label>
+    <input
+      value={personal.esic}
+      onChange={(e) => updatePersonal("esic", e.target.value)}
+    />
+  </div>
+
 </div>
             </div>
           )}
@@ -784,6 +855,34 @@ export default function Onboarding() {
     onChange={(e) => updateJob("noticePeriod", e.target.value)}
   />
   <label>Notice Period</label>
+</div>
+
+               <div className="form-group">
+  <input
+    placeholder=" "
+    value={job.pf}
+    onChange={(e) => updateJob("pf", e.target.value)}
+  />
+  <label>PF (Provident Fund Number)</label>
+</div>
+
+               <div className="form-group">
+  <input
+    placeholder=" "
+    value={job.designationChanged}
+    onChange={(e) => updateJob("designationChanged", e.target.value)}
+  />
+  <label>Designation Changed (New Designation)</label>
+</div>
+
+               <div className="form-group">
+  <input
+    type="date"
+    placeholder=" "
+    value={job.designationChangedDate}
+    onChange={(e) => updateJob("designationChangedDate", e.target.value)}
+  />
+  <label>Designation Changed Date</label>
 </div>
                
               </div>

@@ -12,7 +12,9 @@ const data = [
 export default function CashFlowDetails() {
   return (
     <div className="cf-page">
-
+ <button onClick={() => window.history.back()}>
+      ← Back
+    </button>
       <h2>Cash Flow Analysis</h2>
 
       {/* SUMMARY CARD */}

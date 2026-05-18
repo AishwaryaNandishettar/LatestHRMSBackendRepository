@@ -12,6 +12,9 @@ const data = [
 export default function PayrollDetails() {
   return (
     <div className="fd-page">
+       <button onClick={() => window.history.back()}>
+      ← Back
+    </button>
       <h2>Payroll Details</h2>
 
       <table>

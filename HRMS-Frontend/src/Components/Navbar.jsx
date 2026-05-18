@@ -1,20 +1,24 @@
 import React, { useContext, useState } from "react";
 import styles from "./Navbar.module.css";
-import { FiBell, FiCopy } from "react-icons/fi";
+import { FiBell, FiCopy ,FiMenu} from "react-icons/fi";
 import logo from "../assets/Transperant Background.png";
 import { AuthContext } from "../Context/Authcontext";
 import { useNavigate } from "react-router-dom";
 
-const AvatarCircle = ({ name, photo }) => {
-  const letter =
-    photo || !name ? null : name.trim().charAt(0).toUpperCase();
+const AvatarCircle = ({ name, photo, email }) => {
+  // 👇 Extract name from email if name not available
+  const displayName =
+    name ||
+    (email ? email.split("@")[0] : "User");
+
+  const letter = displayName.charAt(0).toUpperCase();
 
   return (
     <div className={styles.userdp}>
       {photo ? (
         <img src={photo} alt="User DP" className={styles.userdpImg} />
       ) : (
-        <span>{letter || "?"}</span>
+        <span>{letter}</span>
       )}
     </div>
   );
@@ -24,7 +28,8 @@ const Navbar = ({
   notifications,
   setNotifications,
   showNotif,
-  setShowNotif
+  setShowNotif,
+   onMenuToggle   // ADD THIS
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, logout } = useContext(AuthContext);
@@ -45,6 +50,7 @@ const Navbar = ({
 const sortedNotifications = [...notifications].sort(
   (a, b) => a.read - b.read
 );
+
 const markAsRead = (id) => {
   setNotifications(prev =>
     prev.map(n =>
@@ -52,10 +58,28 @@ const markAsRead = (id) => {
     )
   );
 };
+
+const handleNotificationClick = (notification) => {
+  // Mark as read
+  markAsRead(notification.id);
+  
+  // Navigate based on notification type
+  if (notification.link) {
+    navigate(notification.link);
+    setShowNotif(false);
+  }
+};
   return (
     <header className={styles.navbarContainer}>
       {/* LOGO */}
       <div className={styles.navbarLeft}>
+         {/* ADD THIS */}
+  <button
+    className={styles.hamburger}
+    onClick={onMenuToggle}
+  >
+    <FiMenu />
+  </button>
         <img src={logo} alt="Logo" className={styles.logo} />
       </div>
 
@@ -103,7 +127,8 @@ const markAsRead = (id) => {
             className={`${styles.notify} ${
               n.read ? styles.read : styles.unread
             }`}
-            onClick={() => markAsRead(n.id)}
+            onClick={() => handleNotificationClick(n)}
+            style={{ cursor: 'pointer' }}
           >
             <div>{n.message}</div>
             <small>{n.time}</small>
@@ -122,9 +147,10 @@ const markAsRead = (id) => {
               style={{ cursor: "pointer" }}
             >
               <AvatarCircle
-                name={user?.name}
-                photo={user?.photo}
-              />
+  name={user?.name}
+  photo={user?.photo}
+  email={user?.email}
+/>
             </div>
           )}
 

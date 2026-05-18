@@ -1,0 +1,107 @@
+═══════════════════════════════════════════════════════════
+  🔧 RESTART BACKEND NOW - SIMPLE STEPS
+═══════════════════════════════════════════════════════════
+
+YOUR BACKEND IS RUNNING ON PORT 8082 ✅
+BUT THE NEW CODE IS NOT COMPILED YET ❌
+
+═══════════════════════════════════════════════════════════
+
+STEP 1: Stop Backend
+───────────────────────────────────────────────────────────
+In your backend terminal (PowerShell window):
+Press: Ctrl + C
+
+Wait for it to stop completely.
+
+───────────────────────────────────────────────────────────
+
+STEP 2: Rebuild Backend
+───────────────────────────────────────────────────────────
+In the same terminal, run:
+
+cd e:\HRMSProject\HRMS-Backend
+mvn clean install -DskipTests
+
+Wait for: BUILD SUCCESS
+
+───────────────────────────────────────────────────────────
+
+STEP 3: Start Backend Again
+───────────────────────────────────────────────────────────
+mvn spring-boot:run
+
+Wait for: "Started HmrsBackendApplication"
+
+───────────────────────────────────────────────────────────
+
+STEP 4: Test the New API
+───────────────────────────────────────────────────────────
+Open a NEW PowerShell window and run:
+
+curl http://localhost:8082/api/offer-templates-simple/test
+
+Expected response:
+{"status":"success","message":"API is working!","mongoTemplate":"Connected"}
+
+If you see this → Backend is ready! ✅
+
+───────────────────────────────────────────────────────────
+
+STEP 5: Restart Frontend
+───────────────────────────────────────────────────────────
+In your frontend terminal:
+- Press Ctrl + C
+- Run: npm start
+
+───────────────────────────────────────────────────────────
+
+STEP 6: Clear Browser Cache
+───────────────────────────────────────────────────────────
+Press: Ctrl + Shift + R (hard refresh)
+
+───────────────────────────────────────────────────────────
+
+STEP 7: Try Upload Again
+───────────────────────────────────────────────────────────
+1. Go to Recruitment page
+2. Click "Release Offer Letter"
+3. Fill in:
+   Template Name:  Hero FinCorp Template
+   Company Name:   Hero FinCorp
+   Description:    Test template
+4. Select PDF file
+5. Click "Upload Template"
+
+───────────────────────────────────────────────────────────
+
+✅ EXPECTED RESULT:
+───────────────────────────────────────────────────────────
+Backend console will show:
+=== Upload Template Called ===
+Template Name: Hero FinCorp Template
+Company Name: Hero FinCorp
+File: [your-file].pdf
+Saving to MongoDB...
+Saved successfully! ID: [some-id]
+
+Frontend will show:
+- Success message
+- Modal switches to "Preview" tab
+- PDF renders as images
+
+───────────────────────────────────────────────────────────
+
+❌ IF STEP 4 FAILS (Test API):
+───────────────────────────────────────────────────────────
+The new controller is not loaded. Make sure you:
+1. Stopped backend completely (Ctrl+C)
+2. Ran: mvn clean install -DskipTests
+3. Saw: BUILD SUCCESS
+4. Started backend again: mvn spring-boot:run
+
+═══════════════════════════════════════════════════════════
+
+IMPORTANT: You MUST restart backend for new code to work!
+
+═══════════════════════════════════════════════════════════

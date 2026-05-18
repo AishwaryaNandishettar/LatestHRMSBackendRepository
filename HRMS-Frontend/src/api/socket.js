@@ -11,7 +11,8 @@ export const connectSocket = (
   onPrivateMessage,
   onTask,
   onStatus,
-  onCallSignal
+  onCallSignal,
+   onKpiUpdate   // ✅ ADD THIS
 ) => {
   // ✅ Prevent duplicate connections
   if (stompClient && stompClient.connected) {
@@ -24,10 +25,20 @@ export const connectSocket = (
     stompClient.deactivate();
     stompClient = null;
   }
-
+  // ✅ ADD THIS BLOCK HERE
+if (!token) {
+  console.error("❌ No token found for WebSocket");
+  return;
+}
   stompClient = new Client({
-    webSocketFactory: () =>
-      new SockJS(`${import.meta.env.VITE_API_BASE_URL}/ws`),
+  webSocketFactory: () =>
+  new SockJS(
+    `${import.meta.env.VITE_API_BASE_URL}/ws?token=${token}`,
+    null,
+    {
+      transports: ["websocket", "xhr-streaming", "xhr-polling"]
+    }
+  ),
 
     connectHeaders: {
       Authorization: `Bearer ${token}`,
@@ -38,8 +49,35 @@ export const connectSocket = (
     debug: (str) => console.log("STOMP:", str),
 
     onConnect: () => {
+      if (!subscriptions.claims) {
+  subscriptions.claims = stompClient.subscribe(
+    "/topic/claims",
+    (msg) => {
+      console.log("📩 Claim update received:", msg.body);
+
+      // 👉 refresh UI instantly
+      if (onStatus) onStatus(msg.body);
+
+      // OR directly refetch claims
+      // fetchClaims();
+    }
+  );
+}
       console.log("✅ WebSocket connected");
       window.stompClient = stompClient;
+
+       // ✅ ADD THIS HERE (IMPORTANT)
+  if (!subscriptions.kpi) {
+    subscriptions.kpi = stompClient.subscribe(
+      "/topic/kpi-updates",
+      (msg) => {
+        const data = JSON.parse(msg.body);
+        console.log("📊 KPI UPDATE 👉", data);
+
+        if (onKpiUpdate) onKpiUpdate(data); // 🔥 trigger React update
+      }
+    );
+  }
 
       // ✅ Private messages
       if (!subscriptions.messages) {
@@ -121,6 +159,7 @@ export const disconnectSocket = () => {
     Object.keys(subscriptions).forEach((k) => delete subscriptions[k]);
     console.log("🔌 WebSocket manually disconnected");
   }
+
 };
 
 /* ---------------- CALL SIGNAL ---------------- */

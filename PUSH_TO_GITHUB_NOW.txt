@@ -1,0 +1,47 @@
+═══════════════════════════════════════════════════════════
+🚀 PUSH CHANGES TO GITHUB - COPY & PASTE
+═══════════════════════════════════════════════════════════
+
+STEP 1: Add Files
+───────────────────────────────────────────────────────────
+git add .
+
+═══════════════════════════════════════════════════════════
+
+STEP 2: Commit Changes
+───────────────────────────────────────────────────────────
+git commit -m "Fix Render deployment - Add Docker configuration"
+
+═══════════════════════════════════════════════════════════
+
+STEP 3: Push to GitHub
+───────────────────────────────────────────────────────────
+git push origin main
+
+═══════════════════════════════════════════════════════════
+
+WHAT WAS CHANGED:
+───────────────────────────────────────────────────────────
+✅ Created render.yaml - Tells Render to use Docker
+✅ Updated AuthController - Added localhost CORS
+✅ Created localhost setup guides
+
+═══════════════════════════════════════════════════════════
+
+AFTER PUSHING:
+───────────────────────────────────────────────────────────
+1. Go to Render Dashboard
+2. Update service settings:
+   - Runtime: Docker
+   - Root Directory: HRMS-Backend
+   - Dockerfile Path: ./Dockerfile
+3. Add environment variables
+4. Click "Manual Deploy"
+
+═══════════════════════════════════════════════════════════
+
+ALTERNATIVE: All in One Command
+───────────────────────────────────────────────────────────
+git add . && git commit -m "Fix Render deployment - Add Docker configuration" && git push origin main
+
+═══════════════════════════════════════════════════════════

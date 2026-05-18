@@ -1,17 +1,20 @@
 package com.omoikaneinnovation.hmrsbackend.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.*;
+import lombok.NoArgsConstructor;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
-@Data
-@Builder
-@NoArgsConstructor
-
-@AllArgsConstructor
 @Document(collection = "chat_messages")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ChatMessage {
 
     @Id
@@ -25,4 +28,8 @@ public class ChatMessage {
 
     private boolean seen;
     private boolean delivered;
+
+    private String fileUrl;
+    private String fileName;
+    private String fileType; // image, pdf, doc
 }

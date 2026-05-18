@@ -1,4 +1,4 @@
-.container {
+.container  {
   padding: 20px;
 }
 
@@ -30,23 +30,17 @@
 
 
 
-.table th {
-  background: #1f6fa5;
+.table thead th {
+  background: #1e3c72;     /* ✅ exact same as Profile */
   color: white;
   padding: 10px;
-  position: relative;
-}
-.table thead {
-  position: relative;
-  z-index: 5;
-}
-.table th {
-  background: #1f6fa5;
-  color: white;
-  padding: 10px;
+
+  text-align: center;        /* ✅ center horizontally */
+  vertical-align: middle;    /* ✅ center vertically */
+
   position: relative;
   overflow: visible;
-  z-index: 10;   /* 🔥 IMPORTANT */
+  z-index: 10;
 }
 .popup {
   position: absolute;
@@ -71,8 +65,9 @@
 
 .header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;   /* ✅ center everything */
   align-items: center;
+  gap: 5px;                  /* space between text & arrow */
 }
 
 .header span {

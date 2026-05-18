@@ -4,8 +4,12 @@ import axios from "axios";
 console.log('🔍 VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
 console.log('🔍 All env vars:', import.meta.env);
 
+const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8082/api"; // Fixed: backend runs on 8082 with /api prefix
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: BASE_URL,
 });
 
 // Debug: Log the baseURL being used

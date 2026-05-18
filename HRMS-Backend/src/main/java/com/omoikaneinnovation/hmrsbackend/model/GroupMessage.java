@@ -1,17 +1,18 @@
 package com.omoikaneinnovation.hmrsbackend.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.*;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
 import java.time.Instant;
 
-@Document(collection = "group_messages")
 @Data
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
-
+@Document(collection = "group_messages")
 public class GroupMessage {
 
     @Id
@@ -21,4 +22,5 @@ public class GroupMessage {
     private String senderEmail;
     private String content;
     private Instant createdAt;
+    private String senderName;
 }

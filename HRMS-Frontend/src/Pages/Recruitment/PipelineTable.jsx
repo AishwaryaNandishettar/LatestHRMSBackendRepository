@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import "./PipelineTable.css";
 import { useNavigate, useLocation } from "react-router-dom";
+import ReleaseOfferLetterModal from "./ReleaseOfferLetterModal"; // Import the modal
 
 const stages = [
   { key: "Applied", label: "Received Applications", count: 500, class: "blue" },
@@ -26,6 +27,9 @@ const initialData = location.state?.jobs || [];
   const [openMenu, setOpenMenu] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [showExportOptions, setShowExportOptions] = useState(false);
+  
+  // ── OFFER LETTER STATE ──
+  const [offerLetterCandidate, setOfferLetterCandidate] = useState(null);
 
   const visibleColumns = candidates.length > 0
     ? Object.keys(candidates[0]).filter(
@@ -340,6 +344,26 @@ useEffect(() => {
                       }>
                         View Profile
                       </div>
+                      
+                      {/* Show Release Offer Letter only for Selected candidates */}
+                      {c.stage === 'Selected' && (
+                        <div 
+                          onClick={() => {
+                            setOfferLetterCandidate(c);
+                            setOpenMenu(null);
+                          }}
+                          style={{ 
+                            color: '#16a34a', 
+                            fontWeight: 600,
+                            borderTop: '1px solid #e5e7eb',
+                            paddingTop: '8px',
+                            marginTop: '4px'
+                          }}
+                        >
+                          📄 Release Offer Letter
+                        </div>
+                      )}
+                      
                       <div>Move to Next Stage</div>
                       <div>Schedule Interview</div>
                       <div>Reject Candidate</div>
@@ -374,6 +398,14 @@ useEffect(() => {
             Next
           </button>
         </div>
+      )}
+
+      {/* ── RELEASE OFFER LETTER MODAL ── */}
+      {offerLetterCandidate && (
+        <ReleaseOfferLetterModal
+          job={offerLetterCandidate}
+          onClose={() => setOfferLetterCandidate(null)}
+        />
       )}
 
     </div>

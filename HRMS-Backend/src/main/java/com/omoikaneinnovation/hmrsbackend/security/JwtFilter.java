@@ -32,6 +32,17 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // Skip JWT processing for specific endpoints
+        String requestURI = request.getRequestURI();
+        if (requestURI.contains("/api/offer-templates-simple/") || 
+            requestURI.contains("/api/offer-templates/") ||
+            requestURI.contains("/api/auth/") ||
+            requestURI.contains("/api/onboarding/") ||
+            requestURI.equals("/error")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -71,6 +82,7 @@ System.out.println("JWT Role: " + role);
                     }
                 }
             } catch (Exception e) {
+                System.out.println("JWT Filter Error: " + e.getMessage());
                 SecurityContextHolder.clearContext();
             }
         }

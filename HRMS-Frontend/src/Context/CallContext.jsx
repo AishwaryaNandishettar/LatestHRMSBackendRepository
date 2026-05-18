@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { AuthContext } from './Authcontext';
 import { connectSocket, sendCallSignal } from '../api/socket';
+import TokenManager from '../Utils/tokenManager';
 import webrtcPeer from '../Services/webrtcPeer';
 import ringtoneManager from '../Utils/ringtone';
 
@@ -64,13 +65,18 @@ export const CallProvider = ({ children }) => {
     
     const connectWithRetry = async () => {
       try {
+        const activeToken = await TokenManager.getValidToken();
+        if (!activeToken) {
+          console.error('❌ [CallContext] No valid token available for WebSocket');
+          return;
+        }
+
         await connectSocket(
           LOGGED_IN_EMAIL,
-          token,
+          activeToken,
           () => {}, // onPrivateMessage - handled in WorkChat
           () => {}, // onTask
-          () => {}, // onStatus
-          () => {}  // onChat
+          () => {} // onStatus
         );
         socketConnected.current = true;
         setWsConnected(true);
@@ -99,11 +105,16 @@ export const CallProvider = ({ children }) => {
   useEffect(() => {
     const handleCallSignal = async (e) => {
       const data = e.detail;
-      console.log('📞 [CallContext] Call signal received:', data);
-      
       const normalizedCurrentUser = LOGGED_IN_EMAIL?.trim().toLowerCase();
       const normalizedToEmail = data.toEmail?.trim().toLowerCase();
       const normalizedFromEmail = data.fromEmail?.trim().toLowerCase();
+
+      console.log('📞 [CallContext] Call signal received:', data, {
+        currentUser: normalizedCurrentUser,
+        toEmail: normalizedToEmail,
+        fromEmail: normalizedFromEmail,
+        hasIncomingCallSubscription: !!LOGGED_IN_EMAIL
+      });
 
       try {
         switch (data.action) {

@@ -46,9 +46,13 @@ const PayrollToolbar = ({
       </button>
 
       <button className="btn-secondary" onClick={onExport}>Export</button>
-      <button className="btn-primary" onClick={onProcessAll}>
-  Process All Payroll
-</button>
+
+     
+     {onProcessAll && (
+  <button className="btn-primary" onClick={onProcessAll}>
+    Process All Payroll
+  </button>
+)}
     
     </div>
   );

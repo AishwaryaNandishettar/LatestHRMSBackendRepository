@@ -185,6 +185,7 @@ const generateRecurringInstances = (meeting) => {
           if (originalMeeting.status === "Cancelled") {
             onEdit && onEdit(originalMeeting);
             return;
+<<<<<<< HEAD
           }
 
           const now = new Date();
@@ -211,7 +212,19 @@ const generateRecurringInstances = (meeting) => {
             onEdit && onEdit(originalMeeting);
           } else {
             alert("This meeting has already ended.");
+=======
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
           }
+
+          const now = new Date();
+          const meetingEndTime = new Date(originalMeeting.endTime);
+
+          if (meetingEndTime < now) {
+            alert("This meeting has already ended and cannot be edited.");
+            return;
+          }
+
+          onEdit && onEdit(originalMeeting);
         }}
 
         eventDidMount={(info) => {

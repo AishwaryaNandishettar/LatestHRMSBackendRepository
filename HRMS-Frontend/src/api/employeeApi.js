@@ -1,76 +1,46 @@
 // api/employeeApi.js
-import axios from "axios";
-
-const API = `${import.meta.env.VITE_API_BASE_URL}`;
+import api from "./axios";
 
 // ✅ GET ALL EMPLOYEES
-
 export const getAllEmployees = async () => {
-  const token = localStorage.getItem("token");
-
- // return await axios.get("http://localhost:8082/api/employees", {
- // ✅ CORRECT
-return await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/employee/all`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await api.get("/api/employee/all");
+  console.log("🔍 getAllEmployees API response:", response);
+  return response.data;
 };
 
 // ✅ GET BIRTHDAYS (ONLY THIS ONE KEEP)
 export const getBirthdays = async () => {
-  const token = localStorage.getItem("token");
-
-  const res = await axios.get(
-    `${API}/api/employee/birthdays/current-month`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  return res.data;
+  const response = await api.get("/api/employee/birthdays/current-month");
+  console.log("🔍 getBirthdays API response:", response);
+  return response.data;
 };
 
 
 export const fetchEmployeesAsUsers = async () => {
-  const token = localStorage.getItem("token");
-  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/employee/as-users`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.data;
+  const response = await api.get("/api/employee/as-users");
+  return response.data;
 };
 
 export const fetchAllParticipants = async () => {
-  const token = localStorage.getItem("token");
-  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/employee/participants`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.data;
+  const response = await api.get("/api/employee/participants");
+  return response.data;
 };
 
 export const searchParticipants = async (query) => {
-  const token = localStorage.getItem("token");
-  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/employee/participants/search`, {
-    params: { query: query || "" },
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+  const response = await api.get("/api/employee/participants/search", {
+    params: { query: query || "" }
   });
-  return res.data;
+  return response.data;
 };
 
 export const fetchAllEmployees = async () => {
-  const token = localStorage.getItem("token");
-  const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/employee/all`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return res.data;
+  const response = await api.get("/api/employee/all");
+  return response.data;
+};
+
+// ✅ UPDATE EMPLOYEE
+export const updateEmployee = async (employeeId, employeeData) => {
+  const response = await api.put(`/api/employee/update/${employeeId}`, employeeData);
+  console.log("🔍 updateEmployee API response:", response);
+  return response.data;
 };

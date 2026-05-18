@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Dummy PDF Templates</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .template-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .template-preview {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: 'Times New Roman', serif;
+            line-height: 1.6;
+        }
+        .letterhead {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .company-address {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <h1>Create Dummy PDF Templates</h1>
+    <p>Click the buttons below to generate and download dummy PDF templates for testing:</p>
+
+    <div class="template-section">
+        <h3>Template 1: Simple Offer Letter</h3>
+        <div class="template-preview">
+            <div class="letterhead">
+                <div class="company-name">[Company Name]</div>
+                <div class="company-address">123 Business Street, City, State 12345 | Phone: (555) 123-4567</div>
+            </div>
+            <p><strong>Date:</strong> [Date]</p>
+            <p><strong>Dear [Candidate Name],</strong></p>
+            <p>We are pleased to offer you the position of <strong>[Position]</strong> at <strong>[Company Name]</strong>.</p>
+            <p><strong>Position Details:</strong></p>
+            <ul>
+                <li>Position: [Position]</li>
+                <li>Department: [Department]</li>
+                <li>Start Date: [Start Date]</li>
+                <li>Salary: [Salary]</li>
+            </ul>
+            <p>Please confirm your acceptance by [Date].</p>
+            <p>Sincerely,<br>HR Department</p>
+        </div>
+        <button onclick="createSimpleTemplate()">Download Simple Template</button>
+    </div>
+
+    <div class="template-section">
+        <h3>Template 2: Detailed Offer Letter</h3>
+        <div class="template-preview">
+            <div class="letterhead">
+                <div class="company-name">YOUR COMPANY NAME</div>
+                <div class="company-address">Human Resources Department</div>
+            </div>
+            <p><strong>OFFER LETTER</strong></p>
+            <p>Dear [Recipient Name],</p>
+            <p>We are excited to offer you employment at YOUR COMPANY NAME for the position of POSITION APPLIED FOR.</p>
+            <p><strong>Employment Details:</strong></p>
+            <ul>
+                <li>Position: POSITION APPLIED FOR</li>
+                <li>Start Date: DATE TO START</li>
+                <li>Annual Salary: [Salary]</li>
+                <li>Benefits: As per company policy</li>
+            </ul>
+            <p>This offer is contingent upon successful completion of background verification.</p>
+            <p>We look forward to welcoming you to our team!</p>
+            <p>Best regards,<br>[Your Name]<br>HR Manager</p>
+        </div>
+        <button onclick="createDetailedTemplate()">Download Detailed Template</button>
+    </div>
+
+    <div class="template-section">
+        <h3>Template 3: Professional Format</h3>
+        <div class="template-preview">
+            <div class="letterhead">
+                <div class="company-name">{{companyName}}</div>
+                <div class="company-address">{{companyAddress}}</div>
+            </div>
+            <p>{{today}}</p>
+            <p>{{candidateName}}<br>
+            {{candidateAddress}}</p>
+            <p><strong>Subject: Job Offer - {{position}}</strong></p>
+            <p>Dear {{candidateName}},</p>
+            <p>Following our interview process, we are pleased to extend an offer of employment for the position of {{position}} in our {{department}} department.</p>
+            <p><strong>Compensation Package:</strong></p>
+            <ul>
+                <li>Annual CTC: {{ctc}}</li>
+                <li>Basic Salary: {{basic}}</li>
+                <li>HRA: {{hra}}</li>
+                <li>Other Allowances: {{allowances}}</li>
+            </ul>
+            <p><strong>Terms:</strong></p>
+            <ul>
+                <li>Joining Date: {{joiningDate}}</li>
+                <li>Probation Period: {{probationPeriod}}</li>
+                <li>Notice Period: {{noticePeriod}}</li>
+            </ul>
+            <p>Please confirm your acceptance by {{offerValidUntil}}.</p>
+            <p>Warm regards,<br>{{hrName}}<br>{{hrDesignation}}</p>
+        </div>
+        <button onclick="createProfessionalTemplate()">Download Professional Template</button>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+        function createSimpleTemplate() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text('[Company Name]', 105, 30, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text('123 Business Street, City, State 12345 | Phone: (555) 123-4567', 105, 40, { align: 'center' });
+            
+            // Line
+            doc.line(20, 45, 190, 45);
+            
+            // Content
+            doc.setFontSize(12);
+            doc.text('Date: [Date]', 20, 60);
+            doc.text('Dear [Candidate Name],', 20, 80);
+            
+            const content = [
+                'We are pleased to offer you the position of [Position] at [Company Name].',
+                '',
+                'Position Details:',
+                '• Position: [Position]',
+                '• Department: [Department]', 
+                '• Start Date: [Start Date]',
+                '• Salary: [Salary]',
+                '',
+                'Please confirm your acceptance by [Date].',
+                '',
+                'Sincerely,',
+                'HR Department'
+            ];
+            
+            let yPos = 100;
+            content.forEach(line => {
+                doc.text(line, 20, yPos);
+                yPos += 15;
+            });
+
+            doc.save('Simple_Offer_Letter_Template.pdf');
+            showResult('Simple template downloaded successfully!');
+        }
+
+        function createDetailedTemplate() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFontSize(22);
+            doc.setFont(undefined, 'bold');
+            doc.text('YOUR COMPANY NAME', 105, 30, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text('Human Resources Department', 105, 40, { align: 'center' });
+            
+            // Line
+            doc.line(20, 45, 190, 45);
+            
+            // Title
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('OFFER LETTER', 105, 60, { align: 'center' });
+            
+            // Content
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            
+            const content = [
+                'Dear [Recipient Name],',
+                '',
+                'We are excited to offer you employment at YOUR COMPANY NAME for the',
+                'position of POSITION APPLIED FOR.',
+                '',
+                'Employment Details:',
+                '• Position: POSITION APPLIED FOR',
+                '• Start Date: DATE TO START',
+                '• Annual Salary: [Salary]',
+                '• Benefits: As per company policy',
+                '',
+                'This offer is contingent upon successful completion of background verification.',
+                '',
+                'We look forward to welcoming you to our team!',
+                '',
+                'Best regards,',
+                '[Your Name]',
+                'HR Manager'
+            ];
+            
+            let yPos = 80;
+            content.forEach(line => {
+                doc.text(line, 20, yPos);
+                yPos += 12;
+            });
+
+            doc.save('Detailed_Offer_Letter_Template.pdf');
+            showResult('Detailed template downloaded successfully!');
+        }
+
+        function createProfessionalTemplate() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Header
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text('{{companyName}}', 105, 25, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text('{{companyAddress}}', 105, 35, { align: 'center' });
+            
+            // Line
+            doc.line(20, 40, 190, 40);
+            
+            // Content
+            doc.setFontSize(12);
+            doc.text('{{today}}', 20, 55);
+            
+            doc.text('{{candidateName}}', 20, 70);
+            doc.text('{{candidateAddress}}', 20, 80);
+            
+            doc.setFont(undefined, 'bold');
+            doc.text('Subject: Job Offer - {{position}}', 20, 95);
+            
+            doc.setFont(undefined, 'normal');
+            doc.text('Dear {{candidateName}},', 20, 110);
+            
+            const content = [
+                'Following our interview process, we are pleased to extend an offer of',
+                'employment for the position of {{position}} in our {{department}} department.',
+                '',
+                'Compensation Package:',
+                '• Annual CTC: {{ctc}}',
+                '• Basic Salary: {{basic}}',
+                '• HRA: {{hra}}',
+                '• Other Allowances: {{allowances}}',
+                '',
+                'Terms:',
+                '• Joining Date: {{joiningDate}}',
+                '• Probation Period: {{probationPeriod}}',
+                '• Notice Period: {{noticePeriod}}',
+                '',
+                'Please confirm your acceptance by {{offerValidUntil}}.',
+                '',
+                'Warm regards,',
+                '{{hrName}}',
+                '{{hrDesignation}}'
+            ];
+            
+            let yPos = 125;
+            content.forEach(line => {
+                if (line.startsWith('•')) {
+                    doc.text(line, 25, yPos);
+                } else {
+                    doc.text(line, 20, yPos);
+                }
+                yPos += 12;
+            });
+
+            doc.save('Professional_Offer_Letter_Template.pdf');
+            showResult('Professional template downloaded successfully!');
+        }
+
+        function showResult(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `<div class="success">${message}</div>`;
+            setTimeout(() => {
+                resultDiv.innerHTML = '';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -3,8 +3,7 @@ package com.omoikaneinnovation.hmrsbackend.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-// ✅ ADD THIS IMPORT (THIS IS YOUR ERROR FIX)
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
+
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
@@ -13,13 +12,6 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:uploads/");
     }
-
-     @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOriginPatterns("*")
-                .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
+    // CORS is handled entirely by SecurityConfig.corsConfigurationSource()
+    // Do NOT add addCorsMappings here — it conflicts with Spring Security CORS
 }

@@ -90,10 +90,16 @@ export default function ChatComposer({ onSend, replyMessage, setReplyMessage }) 
 
   // ── Send ────────────────────────────────────────────────────────────────────
   const send = () => {
+<<<<<<< HEAD
     if (!text.trim() && files.length === 0) return;
     if (fileError) return;
 
     onSend(text, files, replyMessage);
+=======
+   if (!text.trim() && file.lengt
+   
+   === 0) return;
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
 
     setText("");
     setFiles([]);
@@ -108,6 +114,8 @@ export default function ChatComposer({ onSend, replyMessage, setReplyMessage }) 
       send();
     }
   };
+
+  
 
   return (
     <div className="wc-composer">

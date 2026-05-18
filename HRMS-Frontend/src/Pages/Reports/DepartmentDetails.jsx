@@ -39,7 +39,10 @@ export default function DepartmentDetails() {
   return (
     <div className="rd-page">
       <h2>Department Distribution</h2>
-
+             {/* ✅ ADD THIS */}
+    <button onClick={() => window.history.back()}>
+      ← Back
+    </button>
       <table>
         <thead>
           <tr>

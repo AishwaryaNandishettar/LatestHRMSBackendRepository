@@ -1,23 +1,37 @@
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.*;
-import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.beans.factory.annotation.Value;
+import java.util.Arrays;
 
-@Configuration
+// DISABLED — CORS is handled by SecurityConfig.corsConfigurationSource()
+// Having multiple CORS configs causes "allowedOrigins cannot contain *" errors
+// @Configuration
 public class CorsConfig {
 
+
+
+
+    @Value("${app.cors.allowedOrigins}")
+    private String allowedOrigins;
+
+
     @Bean
-    public CorsFilter corsFilter() {
-        CorsConfiguration config = new CorsConfiguration();
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
 
-        config.addAllowedOrigin("https://hrms-frontend-production.vercel.app");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-        config.setAllowCredentials(true);
+                 String[] origins = Arrays.stream(allowedOrigins.split(","))
+                        .map(String::trim)
+                        .toArray(String[]::new);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return new CorsFilter(source);
+                registry.addMapping("/**")
+                        .allowedOrigins(origins)
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+            }
+        };
     }
 }

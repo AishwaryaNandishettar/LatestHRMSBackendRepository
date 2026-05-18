@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./PersonalInsurance.css";
-
+import { getInsurancePlans } from "../api/insuranceApi";
 // sample plans by company id (simple dataset)
 const plansByCompany = {
   star: [
@@ -26,8 +26,8 @@ const plansByCompany = {
 const InsurancePlans = () => {
   const { companyId } = useParams();
   const navigate = useNavigate();
-  const plans = plansByCompany[companyId] || [];
-
+  //const plans = plansByCompany[companyId] || [];
+const [plans, setPlans] = useState([]);
   const [selected, setSelected] = useState(plans[0]?.id || null);
 
   const handleProceed = () => {
@@ -36,6 +36,14 @@ const InsurancePlans = () => {
     // pass plan via state (or use a store / api)
     navigate("/insurance/apply", { state: { companyId, plan } });
   };
+
+  const loadPlans = async () => {
+  const data = await getInsurancePlans(companyId);
+  setPlans(data);
+};
+  useEffect(() => {
+  loadPlans();
+}, [companyId]);
 
   return (
     <div className="ins-page">
@@ -52,6 +60,32 @@ const InsurancePlans = () => {
               <div className="coverage">₹{p.coverage.toLocaleString()}</div>
             </div>
             <div className="plan-body">
+              <div className="plan-body">
+
+  <p><b>Policy No:</b> {p.policyNo}</p>
+
+  <p><b>Insurance Type:</b> {p.insuranceType}</p>
+
+  <div className="premium">
+    Premium <span>₹{p.yearlyPremium}/yr</span>
+  </div>
+
+  <p><b>Coverage:</b> ₹{p.coverage.toLocaleString()}</p>
+
+  <p><b>Covered For:</b></p>
+  <ul>
+    {p.coveredFor?.map((c, i) => (
+      <li key={i}>{c}</li>
+    ))}
+  </ul>
+
+  <ul className="benefits">
+    {p.benefits?.map((b, i) => (
+      <li key={i}>{b}</li>
+    ))}
+  </ul>
+
+</div>
               <div className="premium">Premium <span>₹{p.premium.toLocaleString()}/yr</span></div>
               <ul className="benefits">
                 {p.benefits.map((b,i) => <li key={i}>{b}</li>)}

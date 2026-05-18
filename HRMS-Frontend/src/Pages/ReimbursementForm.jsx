@@ -46,7 +46,7 @@ const Reimbursement = () => {
 };
 
   const { user } = useContext(AuthContext) || {};
-  const [role, setRole] = useState(user?.role || ROLE_EMP);
+  const role = user?.role;
 
   const [requests, setRequests] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -91,7 +91,10 @@ const suggestions =
     description: "",
     files: [],
     otherTitle: "",
-  otherReference: ""
+  otherReference: "",
+  submittedDate: "",
+  accommodationType: "",
+  receiptNumber: ""
   });
 
   // ================= FETCH =================
@@ -108,11 +111,7 @@ useEffect(() => {
   document.addEventListener("mousedown", handleClick);
   return () => document.removeEventListener("mousedown", handleClick);
 }, []);
-  useEffect(() => {
-  if (user?.role) {
-    setRole(user.role);
-  }
-}, [user]);
+ 
 
 useEffect(() => {
   if (form.claimType === "ACCOMMODATION" || form.claimType === "MEDICAL" || form.claimType==="others") {
@@ -162,6 +161,7 @@ if (form.files && form.files.length > 0) {
 
 formData.append("amount", Number(form.amount));
 formData.append("status", STATUS_PENDING);
+formData.append("submittedDate", new Date().toISOString());
 
 await createReimbursement(formData);
 
@@ -182,8 +182,20 @@ await createReimbursement(formData);
   // ================= FILTER =================
 const filteredData = requests.filter((r) => {
 
-  if (role === ROLE_EMP && user?.empCode !== r.empCode) return false;
-  if (role === ROLE_ADMIN && r.status !== STATUS_MGR_APPR) return false;
+  // EMPLOYEE → only own records
+  if (role === ROLE_EMP) {
+    if (user?.empCode !== r.empCode) return false;
+  }
+
+  // MANAGER → see all employees
+  if (role === ROLE_MGR) {
+    return true;
+  }
+
+  // ADMIN → see ALL records
+  if (role === ROLE_ADMIN) {
+    return true;
+  }
 
   return Object.keys(filters).every((key) => {
     if (!filters[key]) return true;
@@ -216,30 +228,7 @@ const filteredData = requests.filter((r) => {
       </div>
 
       {/* ================= ROLE SWITCH ================= */}
-   {!showForm && (
-  <div style={{ marginBottom: 10 }}>
-    <button
-      className={role === ROLE_EMP ? "role-btn active" : "role-btn"}
-      onClick={() => setRole(ROLE_EMP)}
-    >
-      Employee
-    </button>
-
-    <button
-      className={role === ROLE_MGR ? "role-btn active" : "role-btn"}
-      onClick={() => setRole(ROLE_MGR)}
-    >
-      Manager
-    </button>
-
-    <button
-      className={role === ROLE_ADMIN ? "role-btn active" : "role-btn"}
-      onClick={() => setRole(ROLE_ADMIN)}
-    >
-      Admin
-    </button>
-  </div>
-)}
+ 
       {/* ================= FILTER ================= */}
       {!showForm && (
         <div className="filter-section">
@@ -314,91 +303,48 @@ const filteredData = requests.filter((r) => {
 
             
 
-              {/* 👇 KEEP VEHICLE ONLY FOR TRAVEL */}
-  {form.claimType === "TRAVEL" && (
-    
-    <select
-      onChange={(e) => setForm({ ...form, vehicleType: e.target.value })}
-      required
-    >
-      <option value="">Select Travel Mode</option>
-      <option>Bike</option>
-      <option>Bus</option>
-      <option>Flight</option>
-      <option>Taxi</option>
-    </select>
-  )}
-
-
-              {/* CLAIM DATE */}
+   {/* 👇 KEEP VEHICLE ONLY FOR TRAVEL */}
 {form.claimType === "TRAVEL" && (
-  <div className="date-range">
-
-    <div className="date-field">
-      <label>Claim Date</label>
-      <input
-        type="date"
-        onChange={(e) =>
-          setForm({ ...form, incidentDate: e.target.value })
-        }
-        required
-      />
-    </div>
-
-    <span className="date-separator">to</span>
-
-    <div className="date-field">
-      <label>Settlement Date</label>
-      <input
-        type="date"
-        onChange={(e) =>
-          setForm({ ...form, settlementDate: e.target.value })
-        }
-      />
-    </div>
-
-  </div>
+  <select
+    onChange={(e) => setForm({ ...form, vehicleType: e.target.value })}
+    required
+  >
+    <option value="">Select Travel Mode</option>
+    <option>Bike</option>
+    <option>Bus</option>
+    <option>Flight</option>
+    <option>Taxi</option>
+  </select>
 )}
 
- 
 
               
 
-              <input placeholder="Bill Number" onChange={(e) => setForm({ ...form, billNumber: e.target.value })} />
+ 
 
+    {/* LOCATION ONLY FOR TRAVEL (NOT MEDICAL) */}
 {form.claimType === "TRAVEL" && (
-  <div className="date-range">
+  <>
+    <input
+      placeholder="From Location"
+      onChange={(e) =>
+        setForm({ ...form, fromLocation: e.target.value })
+      }
+    />
 
-    <div className="date-field">
-      <label>Travel From</label>
-      <input
-        type="date"
-        onChange={(e) =>
-          setForm({ ...form, travelFromDate: e.target.value })
-        }
-      />
-    </div>
-
-    <span className="date-separator">to</span>
-
-    <div className="date-field">
-      <label>Travel To</label>
-      <input
-        type="date"
-        onChange={(e) =>
-          setForm({ ...form, travelToDate: e.target.value })
-        }
-      />
-    </div>
-
-  </div>
+    <input
+      placeholder="To Location"
+      onChange={(e) =>
+        setForm({ ...form, toLocation: e.target.value })
+      }
+    />
+  </>
 )}
            
 
-              <input placeholder="From Location" onChange={(e) => setForm({ ...form, fromLocation: e.target.value })} />
-              <input placeholder="To Location" onChange={(e) => setForm({ ...form, toLocation: e.target.value })} />
+ 
 
-              <input placeholder="Policy Number" onChange={(e) => setForm({ ...form, policyNumber: e.target.value })} />
+             
 
               <input type="number" placeholder="Amount" onChange={(e) => setForm({ ...form, amount: e.target.value })} />
 
@@ -431,7 +377,13 @@ const filteredData = requests.filter((r) => {
       }
     />
     
-
+<input
+  placeholder="Insurance Policy Number"
+  required
+  onChange={(e) =>
+    setForm({ ...form, policyNumber: e.target.value })
+  }
+/>
     <input type="number" placeholder="Number of Days Hospitalized" />
   {/* ✅ Upload Payment Receipts */}
     <div className="form-field">
@@ -517,7 +469,29 @@ const filteredData = requests.filter((r) => {
   </div>
 )}
 {form.claimType === "ACCOMMODATION" && (
+  
   <div className="form-grid">
+    <select
+  value={form.accommodationType}
+  onChange={(e) =>
+    setForm({ ...form, accommodationType: e.target.value })
+  }
+>
+  <option value="">Select Accommodation Type</option>
+  <option value="HOTEL">Hotel</option>
+  <option value="ROOM">Room</option>
+  <option value="PG">PG</option>
+  <option value="OTHER">Other</option>
+</select>
+{form.accommodationType && (
+  <input
+    placeholder="Receipt Number"
+    required
+    onChange={(e) =>
+      setForm({ ...form, receiptNumber: e.target.value })
+    }
+  />
+)}
 
       {/* Accommodation Contact (NEW FIELD) */}
     <input
@@ -597,7 +571,7 @@ const filteredData = requests.filter((r) => {
       { label: "Employee ID", key: "id" },
       { label: "Employee Name", key: "empName" },
       { label: "Claim Type", key: "claimType" },
-      { label: "Claim Settled Date", key: "claimsettleDate" },
+     { label: "Submitted Date", key: "submittedDate" },
       { label: "Amount", key: "amount" },
       { label: "From Date", key: "travelFromDate" },
       { label: "To Date", key: "travelToDate" },

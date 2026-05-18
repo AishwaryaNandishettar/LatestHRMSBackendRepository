@@ -1,4 +1,3 @@
-import { FaTimes } from "react-icons/fa";
 import PayrollSlip from "./PayrollSlip";
 import "./Payroll.css";
 
@@ -10,8 +9,8 @@ const ViewPayslipModal = ({ open, onClose, data }) => {
       <div className="payslip-modal large">
         <div className="payslip-header">
           <h3>{data.empName || data.fullName || data.employee?.name} – Payslip</h3>
-          <button onClick={onClose} className="close-btn">
-            <FaTimes />
+          <button onClick={onClose} className="close-btn" title="Close">
+            ×
           </button>
         </div>
 

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check User Role - HRMS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #0c5460;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .result-value {
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .role-badge.ADMIN { background: #ffebee; color: #c62828; }
+        .role-badge.HR { background: #e8f5e9; color: #2e7d32; }
+        .role-badge.MANAGER { background: #fff3e0; color: #e65100; }
+        .role-badge.EMPLOYEE { background: #e3f2fd; color: #1565c0; }
+        .role-badge.unknown { background: #fafafa; color: #757575; }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .token-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .token-section h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .token-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            word-break: break-all;
+            color: #666;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Check Current User Role</h1>
+        <p class="subtitle">View your current login information and role</p>
+
+        <div class="info-box">
+            <strong>ℹ️ Info:</strong> This tool reads your current login information from browser storage (localStorage).
+        </div>
+
+        <button onclick="checkRole()" id="checkBtn">
+            Check My Role
+        </button>
+
+        <div id="resultBox" class="result-box">
+            <div class="result-item">
+                <span class="result-label">Name:</span>
+                <span class="result-value" id="userName">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Email:</span>
+                <span class="result-value" id="userEmail">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Employee ID:</span>
+                <span class="result-value" id="userEmpId">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Current Role:</span>
+                <span class="result-value" id="userRole">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Role Badge:</span>
+                <span id="roleBadge">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Logged In:</span>
+                <span class="result-value" id="isLoggedIn">-</span>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <div class="token-section">
+            <h3>JWT Token (from localStorage):</h3>
+            <div class="token-display" id="tokenDisplay">
+                Click "Check My Role" to view token
+            </div>
+        </div>
+
+        <div class="token-section">
+            <h3>Token Payload (decoded):</h3>
+            <div class="token-display" id="payloadDisplay">
+                Click "Check My Role" to view payload
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkRole() {
+            const messageDiv = document.getElementById('message');
+            const resultBox = document.getElementById('resultBox');
+            
+            messageDiv.style.display = 'none';
+            
+            try {
+                // Get user data from localStorage
+                const userStr = localStorage.getItem('loggedUser');
+                const token = localStorage.getItem('token');
+                
+                if (!userStr || !token) {
+                    showError('❌ Not logged in. Please log in to the HRMS application first.');
+                    resultBox.classList.remove('show');
+                    return;
+                }
+                
+                const user = JSON.parse(userStr);
+                
+                // Display user info
+                document.getElementById('userName').textContent = user.name || 'N/A';
+                document.getElementById('userEmail').textContent = user.email || 'N/A';
+                document.getElementById('userEmpId').textContent = user.employeeId || user.empId || 'N/A';
+                document.getElementById('userRole').textContent = user.role || 'N/A';
+                document.getElementById('isLoggedIn').textContent = '✅ Yes';
+                
+                // Display role badge
+                const roleBadgeContainer = document.getElementById('roleBadge');
+                const role = (user.role || 'unknown').toUpperCase();
+                roleBadgeContainer.innerHTML = `<span class="role-badge ${role}">${role}</span>`;
+                
+                // Display token
+                document.getElementById('tokenDisplay').textContent = token;
+                
+                // Decode and display token payload
+                try {
+                    const payload = parseJwt(token);
+                    document.getElementById('payloadDisplay').textContent = JSON.stringify(payload, null, 2);
+                    
+                    // Check if role in token matches role in localStorage
+                    if (payload.role && payload.role.toUpperCase() !== role) {
+                        showError(`⚠️ Warning: Role mismatch! Token has "${payload.role}" but localStorage has "${user.role}". Please log out and log back in.`);
+                    }
+                } catch (e) {
+                    document.getElementById('payloadDisplay').textContent = 'Error decoding token: ' + e.message;
+                }
+                
+                resultBox.classList.add('show');
+                
+            } catch (error) {
+                showError('❌ Error reading user data: ' + error.message);
+                resultBox.classList.remove('show');
+            }
+        }
+        
+        function parseJwt(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            
+            return JSON.parse(jsonPayload);
+        }
+        
+        function showError(message) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = 'message error';
+            messageDiv.style.display = 'block';
+        }
+        
+        // Auto-check on page load
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                checkRole();
+            }
+        });
+    </script>
+</body>
+</html>

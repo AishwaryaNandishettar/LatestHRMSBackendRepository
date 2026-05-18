@@ -1,0 +1,88 @@
+═══════════════════════════════════════════════════════════
+  🔧 FIX 500 ERROR - DO THIS NOW
+═══════════════════════════════════════════════════════════
+
+STEP 1: Check MongoDB
+───────────────────────────────────────────────────────────
+Open Command Prompt and run:
+
+    mongosh
+
+If it connects → MongoDB is running ✅
+If it fails → Start MongoDB:
+
+    net start MongoDB
+
+───────────────────────────────────────────────────────────
+
+STEP 2: Restart Backend
+───────────────────────────────────────────────────────────
+Double-click this file:
+
+    e:\HRMSProject\restart-backend.bat
+
+Wait for: "Started HmrsBackendApplication"
+
+───────────────────────────────────────────────────────────
+
+STEP 3: Test Backend API
+───────────────────────────────────────────────────────────
+Double-click this file:
+
+    e:\HRMSProject\test-backend-api.bat
+
+You should see:
+    {"status":"success","message":"API is working!"}
+
+If you see this → Backend is ready! ✅
+
+───────────────────────────────────────────────────────────
+
+STEP 4: Restart Frontend
+───────────────────────────────────────────────────────────
+In your frontend terminal:
+- Press Ctrl+C to stop
+- Run: npm start
+
+───────────────────────────────────────────────────────────
+
+STEP 5: Clear Browser Cache
+───────────────────────────────────────────────────────────
+Press: Ctrl + F5 (hard refresh)
+
+───────────────────────────────────────────────────────────
+
+STEP 6: Try Upload Again
+───────────────────────────────────────────────────────────
+1. Go to Recruitment page
+2. Click "Release Offer Letter"
+3. Fill in:
+   Template Name:  Hero FinCorp Template
+   Company Name:   Hero FinCorp
+   Description:    Test template
+4. Select PDF file
+5. Click "Upload Template"
+
+───────────────────────────────────────────────────────────
+
+✅ EXPECTED RESULT:
+───────────────────────────────────────────────────────────
+- Success message appears
+- Modal switches to "Preview" tab
+- PDF renders as images
+
+───────────────────────────────────────────────────────────
+
+❌ IF STILL FAILS:
+───────────────────────────────────────────────────────────
+Send me:
+1. Backend console output (copy the error)
+2. Result of test-backend-api.bat
+3. MongoDB status (running or not?)
+
+═══════════════════════════════════════════════════════════
+
+MOST IMPORTANT: Make sure MongoDB is running!
+Run: net start MongoDB
+
+═══════════════════════════════════════════════════════════

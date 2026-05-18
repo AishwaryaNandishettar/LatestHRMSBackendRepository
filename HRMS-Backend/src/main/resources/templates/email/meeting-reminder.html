@@ -87,7 +87,7 @@
     <p th:text="'Hello,' + ${recipientName != null ? recipientName : 'Participant'}"></p>
 
     <div class="reminder-alert">
-        <strong th:text="'Your meeting starts in ' + (${reminderText != null ? reminderText : (${timeUntilMeeting != null ? timeUntilMeeting : 'shortly'}))}"></strong>
+        <strong th:text="${reminderText != null ? 'Your meeting starts in ' + reminderText : (timeUntilMeeting != null ? 'Your meeting starts in ' + timeUntilMeeting : 'Your meeting starts shortly')}" />
         <p>Please ensure you are prepared to join the meeting.</p>
     </div>
 

@@ -26,7 +26,7 @@ export default function ScheduleMeetingModal({ onClose, onSave }) {
     setEnd(formatForInput(endTime));
   }, []);
 
-  const handleSave = () => {
+ const handleSave = async () => {
     // Validation
     if (!title.trim()) {
       alert('Please enter a meeting title');
@@ -53,7 +53,7 @@ export default function ScheduleMeetingModal({ onClose, onSave }) {
     const formatDateTimeForBackend = (dateTimeLocal) => {
       if (!dateTimeLocal) return null;
       const date = new Date(dateTimeLocal);
-      return date.toISOString();
+      return date.toISOString().slice(0, 19);
     };
 
     // Parse emails (split by comma, semicolon, or space)
@@ -70,36 +70,55 @@ export default function ScheduleMeetingModal({ onClose, onSave }) {
     };
 
     console.log('📅 Scheduling meeting:', meetingData);
-    onSave(meetingData);
-    onClose();
+   try {
+  await onSave(meetingData);
+  onClose();
+} catch (err) {
+  console.error("❌ Meeting save failed:", err);
+  alert("Failed to schedule meeting");
+}
   };
 
   return (
     <div className="wc-modal-backdrop">
       <div className="wc-modal meeting-modal">
-        <h3>Schedule Meeting</h3>
-           <div className="form-group"></div>
-            <label>Meeting Title</label>
-        <input
-          placeholder="Enter Meeting title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-         <div className="form-group"/>
+<h3>Schedule Meeting</h3>
+
+<div className="form-group">
+  <label>Meeting Title</label>
+  <input
+    placeholder="Enter Meeting title"
+    value={title}
+    onChange={(e) => setTitle(e.target.value)}
+  />
+</div>
+
+<div className="form-group">
   <label>Participants</label>
-        <input
-          placeholder="Enter emails separated by commas"
-          value={emails}
-          onChange={(e) => setEmails(e.target.value)}
-        />
-        <div className="form-row"/>
-  <div className="form-group"></div>
-        <label>Start Time</label>
-        <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} />
+  <input
+    placeholder="Enter emails separated by commas"
+    value={emails}
+    onChange={(e) => setEmails(e.target.value)}
+  />
+</div>
 
-        <label>End Time</label>
-        <input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} />
+<div className="form-group">
+  <label>Start Time</label>
+  <input
+    type="datetime-local"
+    value={start}
+    onChange={(e) => setStart(e.target.value)}
+  />
+</div>
 
+<div className="form-group">
+  <label>End Time</label>
+  <input
+    type="datetime-local"
+    value={end}
+    onChange={(e) => setEnd(e.target.value)}
+  />
+</div>
         <div className="wc-modal-actions">
           <button onClick={onClose}>Cancel</button>
           <button onClick={handleSave}>

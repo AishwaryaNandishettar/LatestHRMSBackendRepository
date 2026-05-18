@@ -1,199 +1,141 @@
-# 🚀 Quick Fix Guide - Login Not Working
+# Quick Fix Guide - Leave Display Not Showing
 
-## What I've Done
-
-✅ Fixed `.env` file location (was in wrong folder)
-✅ Updated `.gitignore` to protect `.env` files
-✅ Created debug page at `/debug-login`
-✅ Created troubleshooting guides
-✅ Created backend test HTML file
-
----
-
-## 🎯 What You Need to Do NOW
-
-### Step 1: Commit and Push Changes (Optional)
-
-```bash
-cd HRMS-Frontend
-git add .
-git commit -m "Add debug tools and fix env configuration"
-git push origin main
+## ✅ Good News!
+The backend is working perfectly! The logs show:
+```
+✅ INCLUDED - Employee is on leave today!
+✅ Added to leaveUsers: OMOI123
+🔍 HomeService: Final leaveUsers count: 1
 ```
 
-### Step 2: Set Environment Variables in Vercel (CRITICAL!)
+## 🔍 Why You Don't See It
 
-1. Go to https://vercel.com/dashboard
-2. Click on your HRMS project
-3. Click **Settings** → **Environment Variables**
-4. Add these THREE variables:
+The leave section should appear **between the KPI cards and the main grid** on the home page. If you don't see it, try these steps:
 
-   **Variable 1:**
-   - Name: `VITE_API_BASE_URL`
-   - Value: `https://trowel-eldercare-scouting.ngrok-free.dev`
-   - Environments: ✅ Production ✅ Preview ✅ Development
+### Step 1: Hard Refresh the Frontend
+```bash
+# In your browser:
+Press Ctrl + Shift + R (Windows/Linux)
+or
+Cmd + Shift + R (Mac)
+```
 
-   **Variable 2:**
-   - Name: `VITE_TURN_USERNAME`
-   - Value: `51e40078dfabc57d54164c2f`
-   - Environments: ✅ Production ✅ Preview ✅ Development
+This clears the cache and reloads the page with the new code.
 
-   **Variable 3:**
-   - Name: `VITE_TURN_CREDENTIAL`
-   - Value: `KJnavaquyonnUlkx`
-   - Environments: ✅ Production ✅ Preview ✅ Development
+### Step 2: Check Browser Console
+1. Press **F12** to open Developer Tools
+2. Go to the **Console** tab
+3. Look for these logs:
+   ```javascript
+   ✅ Home data loaded: {stats: {...}, leaveUsers: Array(1), ...}
+   📊 Leave users count: 1
+   📋 Leave users data: [{name: "OMOI123", startDate: "2026-04-29", ...}]
+   ```
 
-5. Click **Save**
+### Step 3: Scroll Down
+The leave section appears **below the KPI cards**. Scroll down on the home page to see:
+- 🏖️ **Who's on Leave Today** section
+- 🎉 **Upcoming Holidays** section
 
-### Step 3: Redeploy (CRITICAL!)
-
-**Environment variables only take effect after redeployment!**
-
-1. Go to **Deployments** tab
-2. Click on the latest deployment
-3. Click **Redeploy**
-4. Select **"Redeploy from scratch"** (not "Use existing build cache")
-5. Wait for deployment to complete (1-2 minutes)
-
-### Step 4: Test Using Debug Page
-
-1. Open: `https://your-app.vercel.app/debug-login`
-2. Click **"Run All Tests"**
-3. Check the results:
-   - ✅ All environment variables should show as "SET"
-   - ✅ Backend connection should succeed
-   - ✅ Login should work
-
----
-
-## 🔍 If Still Not Working
-
-### Check 1: Verify Environment Variables Are Loaded
-
-Open your deployed app and press **F12** (DevTools), then in Console tab type:
+### Step 4: Add the Holiday
+Run this in MongoDB Compass or mongosh:
 
 ```javascript
-console.log(import.meta.env.VITE_API_BASE_URL)
+db.events.insertOne({
+  title: "Labour Day",
+  date: "2026-05-01",
+  type: "Holiday",
+  description: "International Workers' Day - Public Holiday",
+  createdBy: "admin"
+});
 ```
 
-**Expected:** `https://trowel-eldercare-scouting.ngrok-free.dev`
-**If you see:** `undefined` → Environment variables not set correctly in Vercel
+Then refresh the home page to see the holiday appear.
 
-### Check 2: Test Backend Directly
+## 📊 Expected Result
 
-Open the `test-backend.html` file in your browser:
-1. Double-click `test-backend.html` to open in browser
-2. Click "Test Connection"
-3. Enter your credentials
-4. Click "Test Login"
+After refreshing, you should see this on the home page (scroll down past the KPI cards):
 
-This will tell you if the backend is working.
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 🏖️ Who's on Leave Today                    [1 person]       │
+│                                                              │
+│ ┌─────────────────┐                                         │
+│ │ 👤              │                                         │
+│ │ OMOI123         │                                         │
+│ │ Apr 29 - Apr 29 │                                         │
+│ │ [Sick Leave]    │                                         │
+│ └─────────────────┘                                         │
+└─────────────────────────────────────────────────────────────┘
 
-### Check 3: Check ngrok Status
+┌─────────────────────────────────────────────────────────────┐
+│ 🎉 Upcoming Holidays                                        │
+│                                                              │
+│ ┌───────────────────────────────────────────────────────┐  │
+│ │ ┌──┐                                                   │  │
+│ │ │01│  Labour Day                         Friday        │  │
+│ │ │May│  International Workers' Day                      │  │
+│ │ └──┘                                                   │  │
+│ └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
 
-Your ngrok URL might have expired. Free ngrok URLs expire after a few hours.
+## 🐛 Troubleshooting
 
-**To check:**
-1. Open: `https://trowel-eldercare-scouting.ngrok-free.dev`
-2. If you see "Tunnel not found" → ngrok has expired
+### Issue: Still don't see the sections
+**Solution**: 
+1. Make sure you're logged in as **Admin** (Aishwarya@company.com)
+2. Clear browser cache completely
+3. Restart the frontend dev server if running locally
 
-**To fix:**
-1. Restart ngrok on your backend server:
-   ```bash
-   ngrok http 8082
+### Issue: See "Everyone is present today!"
+**Solution**: This means no leaves are found for today. Check:
+1. The leave has status = "Approved" (not "PENDING")
+2. The leave dates include today (2026-04-29)
+3. Backend logs show "Final leaveUsers count: 1"
+
+### Issue: No holidays showing
+**Solution**:
+1. Add the holiday using the MongoDB command above
+2. Make sure the event has `type: "Holiday"`
+3. Make sure the date is in the future or today
+
+## 🎯 Quick Test
+
+To verify everything is working:
+
+1. **Check Backend Logs** - You should see:
    ```
-2. Copy the new HTTPS URL
-3. Update `VITE_API_BASE_URL` in Vercel
-4. Redeploy
+   ✅ INCLUDED - Employee is on leave today!
+   🔍 HomeService: Final leaveUsers count: 1
+   ```
+   ✅ **This is already working!**
 
----
+2. **Check Frontend Console** - You should see:
+   ```javascript
+   📊 Leave users count: 1
+   ```
 
-## 📋 Troubleshooting Checklist
+3. **Check Home Page** - Scroll down to see the leave section
 
-Before asking for more help, verify:
+## 📸 Where to Look
 
-- [ ] Environment variables are set in Vercel Dashboard
-- [ ] All three environments (Production, Preview, Development) are selected
-- [ ] Redeployed after setting environment variables
-- [ ] Waited for deployment to complete
-- [ ] Backend is running
-- [ ] ngrok is running (if using ngrok)
-- [ ] ngrok URL hasn't expired
-- [ ] Tested with debug page (`/debug-login`)
-- [ ] Checked browser console for errors (F12)
+The sections appear in this order on the home page:
 
----
+1. **KPI Cards** (Total Employees, Pending Leaves, Org Payroll, Events) ← You can see this
+2. **🏖️ Who's on Leave Today** ← Should be here (scroll down)
+3. **🎉 Upcoming Holidays** ← Should be here (scroll down)
+4. **Employee Directory** ← You can see this
+5. **Charts** (Attendance, Leave Summary)
+6. **Calendar and Check-in**
+7. **Payroll and Notifications**
 
-## 🆘 Still Stuck?
+## ✅ Summary
 
-### Option 1: Use Debug Page
-Go to `/debug-login` and share a screenshot of the results
+- ✅ Backend is working (logs confirm it)
+- ✅ Employee OMOI123 is detected on leave today
+- ✅ Data is being sent to frontend
+- ⚠️ Frontend might need a hard refresh (Ctrl+Shift+R)
+- ⚠️ Scroll down on the home page to see the sections
 
-### Option 2: Check Browser Console
-1. Press F12
-2. Go to Console tab
-3. Try to login
-4. Share any error messages
-
-### Option 3: Check Network Tab
-1. Press F12
-2. Go to Network tab
-3. Try to login
-4. Look for the login request
-5. Share the status code and response
-
----
-
-## 📁 Files Created for You
-
-1. **`DEPLOYMENT_STEPS.md`** - Complete deployment guide
-2. **`TROUBLESHOOTING.md`** - Detailed troubleshooting guide
-3. **`check-vercel-env.md`** - How to verify environment variables
-4. **`test-backend.html`** - Standalone backend tester
-5. **`HRMS-Frontend/src/Pages/DebugLogin.jsx`** - Debug page component
-6. **`HRMS-Frontend/verify-env.js`** - Environment verification script
-
----
-
-## 🎯 Most Likely Issue
-
-Based on your description, the most likely issue is:
-
-**Environment variables are not set in Vercel Dashboard**
-
-Even though you have a `.env` file locally, Vercel doesn't use it. You MUST set environment variables in the Vercel Dashboard.
-
-Follow Step 2 and Step 3 above carefully!
-
----
-
-## 💡 Pro Tips
-
-1. **Always redeploy after changing environment variables**
-2. **Use "Redeploy from scratch" to clear cache**
-3. **Check all three environments are selected for each variable**
-4. **ngrok free URLs expire - consider deploying backend permanently**
-5. **Use the debug page to quickly identify issues**
-
----
-
-## 🚀 Next Steps After Login Works
-
-Once login is working:
-
-1. **Deploy backend permanently:**
-   - Use Render.com, Railway, or AWS
-   - Update `VITE_API_BASE_URL` to permanent URL
-
-2. **Set up proper monitoring:**
-   - Add error tracking (Sentry)
-   - Set up uptime monitoring
-
-3. **Secure your app:**
-   - Use HTTPS everywhere
-   - Implement rate limiting
-   - Add proper authentication
-
----
-
-Good luck! 🎉
+**Next Step**: Hard refresh your browser (Ctrl+Shift+R) and scroll down on the home page!

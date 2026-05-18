@@ -1,0 +1,110 @@
+═══════════════════════════════════════════════════════════════
+  HRMS LOCALHOST SETUP - COPY & PASTE COMMANDS
+═══════════════════════════════════════════════════════════════
+
+✅ ALL CODE FIXES APPLIED - READY TO RUN!
+
+═══════════════════════════════════════════════════════════════
+  STEP 1: START BACKEND (Terminal 1)
+═══════════════════════════════════════════════════════════════
+
+cd HRMS-Backend
+mvn spring-boot:run
+
+⏳ Wait for: "Started HmrsBackendApplication"
+✅ Backend running at: http://localhost:8082
+
+═══════════════════════════════════════════════════════════════
+  STEP 2: START FRONTEND (Terminal 2 - NEW WINDOW)
+═══════════════════════════════════════════════════════════════
+
+cd HRMS-Frontend
+npm run dev
+
+✅ Frontend running at: http://localhost:5173
+
+═══════════════════════════════════════════════════════════════
+  STEP 3: CREATE ADMIN USER (Browser Console)
+═══════════════════════════════════════════════════════════════
+
+1. Open browser: http://localhost:5173
+2. Press F12 (Developer Tools)
+3. Click "Console" tab
+4. Copy and paste this code:
+
+fetch('http://localhost:8082/api/auth/register', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    name: 'Admin User',
+    email: 'admin@hrms.com',
+    password: 'Admin@123',
+    role: 'ADMIN'
+  })
+})
+.then(r => r.json())
+.then(d => alert('✅ User created!\n\nEmail: admin@hrms.com\nPassword: Admin@123'))
+.catch(e => alert('❌ Error: ' + e.message));
+
+5. Press ENTER
+6. Wait for success alert
+
+═══════════════════════════════════════════════════════════════
+  STEP 4: LOGIN
+═══════════════════════════════════════════════════════════════
+
+URL: http://localhost:5173
+
+Email: admin@hrms.com
+Password: Admin@123
+
+═══════════════════════════════════════════════════════════════
+  TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+
+❌ Port 8082 already in use?
+
+netstat -ano | findstr :8082
+taskkill /PID <PID_NUMBER> /F
+
+❌ Port 5173 already in use?
+
+npm run dev -- --port 3000
+
+❌ Login not working?
+
+1. Make sure backend shows "Started HmrsBackendApplication"
+2. Make sure you created admin user (Step 3)
+3. Clear browser cache (Ctrl + Shift + Delete)
+4. Try again with: admin@hrms.com / Admin@123
+
+═══════════════════════════════════════════════════════════════
+  WHAT WAS FIXED
+═══════════════════════════════════════════════════════════════
+
+✅ AuthController.java - Fixed syntax error on line 15
+✅ CorsConfig.java - Now allows localhost:5173
+✅ create-admin-user.html - Updated to use localhost
+✅ Frontend .env - Already configured correctly
+
+═══════════════════════════════════════════════════════════════
+  SYSTEM INFORMATION
+═══════════════════════════════════════════════════════════════
+
+Backend:  http://localhost:8082
+Frontend: http://localhost:5173
+Database: MongoDB Atlas (Cloud)
+
+Admin Email:    admin@hrms.com
+Admin Password: Admin@123
+
+═══════════════════════════════════════════════════════════════
+  DONE! 🎉
+═══════════════════════════════════════════════════════════════
+
+Your HRMS application is now running on localhost!
+
+Need more help? Check these files:
+- START_HERE.md (Quick start)
+- README_LOCALHOST.md (Full documentation)
+- LOCALHOST_SETUP_COMPLETE.md (Detailed guide)

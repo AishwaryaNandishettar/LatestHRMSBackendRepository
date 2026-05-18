@@ -26,4 +26,15 @@ public class InsurancePolicy {
     private int maxAdmittedDays;
 
     private List<String> allowedClaimTypes;
+
+    private String policyNo;
+
+private String insuranceType; // INDIVIDUAL / FAMILY
+
+private List<String> coveredFor; 
+// ["self", "father", "mother"]
+
+private double yearlyPremium;
+
+private String planName;
 }

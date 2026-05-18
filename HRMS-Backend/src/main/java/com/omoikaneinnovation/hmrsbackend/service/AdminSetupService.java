@@ -27,7 +27,7 @@ public class AdminSetupService {
         admin.setName("System Admin");
         admin.setEmail("admin@omoi.com");
         admin.setPassword(encoder.encode("Admin@123")); // one-time password
-        admin.setRole("Admin");
+        admin.setRole("ADMIN"); // ✅ Fixed: uppercase role
 
         repo.save(admin);
 

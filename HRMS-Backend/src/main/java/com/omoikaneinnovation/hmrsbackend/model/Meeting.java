@@ -22,6 +22,9 @@ public class Meeting {
     private String description;
     private List<String> participantEmails;
     private String createdByEmail;
+    private Instant repeatUntil;
+private Integer repeatCount;
+private List<String> daysOfWeek;
     
     // ✅ ADD REMARKS FIELD
     private String remarks;

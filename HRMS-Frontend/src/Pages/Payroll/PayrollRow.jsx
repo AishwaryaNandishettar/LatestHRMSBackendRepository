@@ -62,13 +62,39 @@ const PayrollRow = ({ record, onViewPayslip, onProfileView,onEditPayroll,onDownl
   </span>
 </td>
 
-{/* ✅ PAYROLL STATUS COLUMN (DROPDOWN) */}
+{/* ✅ PAYROLL MONTH */}
 <td>
+  {record.month ? (
+    <span style={{
+      background: '#eff6ff', color: '#1d4ed8',
+      padding: '3px 8px', borderRadius: '12px',
+      fontSize: '12px', fontWeight: '600'
+    }}>
+      {record.month}
+    </span>
+  ) : '-'}
+</td>
+
+{/* ✅ INITIATED DATE */}
+<td>
+  {record.initiatedDate ? (
+    <span style={{ fontSize: '12px', color: '#374151', fontWeight: '500' }}>
+      📅 {record.initiatedDate}
+    </span>
+  ) : record.updatedAt ? (
+    <span style={{ fontSize: '12px', color: '#64748b' }}>
+      📅 {new Date(record.updatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+    </span>
+  ) : '-'}
+</td>
+
+  {/* ✅ PAYROLL STATUS COLUMN (DROPDOWN) */}
+ <td>
   {record.salaryStatus === "CREDITED" ? (
     <span className="credited-badge">Credited ✅</span>
   ) : record.payrollStatus === "PROCESSING" ? (
     <span className="processing-loader"></span>
-  ) : (
+  ) : onStatusChange ? (   // ✅ ONLY ADMIN WILL SEE DROPDOWN
     <select
       value={record.payrollStatus || "INITIATED"}
       onChange={(e) => onStatusChange(record, e.target.value)}
@@ -76,8 +102,9 @@ const PayrollRow = ({ record, onViewPayslip, onProfileView,onEditPayroll,onDownl
     >
       <option value="INITIATED">Initiated</option>
       <option value="PROCESSING">Processing</option>
-    
     </select>
+  ) : (   // ✅ EMPLOYEE WILL SEE TEXT ONLY
+    <span>{record.payrollStatus || "INITIATED"}</span>
   )}
 </td>
       {/* ACTIONS */}
@@ -90,14 +117,15 @@ const PayrollRow = ({ record, onViewPayslip, onProfileView,onEditPayroll,onDownl
           >
             <FaEye />
           </button>
-
-         <button
-  className="icon-btn edit"
-  title="Edit Salary"
-  onClick={() => onEditPayroll(record)}
->
-  <FaEdit />
-</button>
+{onEditPayroll && (
+  <button
+    className="icon-btn edit"
+    title="Edit Salary"
+    onClick={() => onEditPayroll(record)}
+  >
+    <FaEdit />
+  </button>
+)}
 
          <button
   className="icon-btn download"

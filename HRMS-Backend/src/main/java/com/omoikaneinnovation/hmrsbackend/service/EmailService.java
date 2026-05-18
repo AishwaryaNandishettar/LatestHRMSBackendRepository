@@ -277,12 +277,13 @@ public class EmailService {
     /**
      * Legacy method for invite emails (backward compatibility)
      */
-    public void sendInviteEmail(String email, String link, String otp) {
+    public void sendInviteEmail(String email, String link, String otp,String password) {
         try {
             Map<String, Object> variables = Map.of(
                     "email", email,
                     "inviteLink", link,
-                    "otp", otp
+                    "otp", otp,
+                     "password", password
             );
 
             EmailRequest emailRequest = EmailRequest.builder()

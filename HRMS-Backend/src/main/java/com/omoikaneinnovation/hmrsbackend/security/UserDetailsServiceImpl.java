@@ -21,12 +21,17 @@
             User user = repo.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
+            // ✅ Ensure role is uppercase for Spring Security
+            String role = user.getRole() != null ? user.getRole().toUpperCase() : "EMPLOYEE";
+            
+            System.out.println("🔍 UserDetailsService: Loading user: " + email + ", Role: " + role);
+
             // 🔴 DO NOT add ROLE_ here
             // Spring will convert ADMIN → ROLE_ADMIN
             return org.springframework.security.core.userdetails.User
                     .withUsername(user.getEmail())
                     .password(user.getPassword())
-                    .roles(user.getRole())   // ADMIN / HR / EMPLOYEE
+                    .roles(role)   // ADMIN / HR / EMPLOYEE / MANAGER
                     .build();
         }
     }

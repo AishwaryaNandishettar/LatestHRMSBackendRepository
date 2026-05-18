@@ -122,7 +122,12 @@
 }
 
 .wc-message.me {
+<<<<<<< HEAD
   justify-content: flex-end;
+=======
+  background:  #ffffff;
+  margin-left: auto;
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
 }
 
 .wc-message.them {

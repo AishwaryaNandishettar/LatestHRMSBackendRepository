@@ -21,4 +21,8 @@ public class Performance {
     private List<MonthlyRating> monthlyRatings;
     private List<Parameter> parameters;
     private List<Review> reviews;
+
+    public void setEmployeeId(String employeeId) {
+    this.employeeId = employeeId;
+}
 }

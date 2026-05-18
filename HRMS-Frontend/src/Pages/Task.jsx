@@ -1,397 +1,591 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import "./Task.css";
-import { FaCheckCircle, FaClock, FaDownload } from "react-icons/fa";
-import { createTaskApi, getTasks } from "../api/taskApi";
+import { TaskContext } from "../Context/TaskContext";
+import { AuthContext } from "../Context/Authcontext";
+import { getAllEmployees } from "../api/employeeApi";
+import {
+  acceptTaskApi, rejectTaskApi,
+  submitTaskApi, updateProgressApi,
+  approveTaskApi, rejectSubmissionApi,
+} from "../api/taskApi";
 
-const dummyUsers = [
-  { name: "Aman", id: "EMP01" },
-  { name: "Priya", id: "EMP02" },
-  { name: "Rahul", id: "EMP03" },
-  { name: "Sneha", id: "EMP04" },
-   { name: "adhviti@gmail.com", id: "EMP9902" }
-];
-
-export default function AdvancedTaskPage() {
-  const [tasks, setTasks] = useState(() => {
-  const saved = localStorage.getItem("tasks");
-  return saved ? JSON.parse(saved) : [];
-});
-useEffect(() => {
-  fetchTasks();
-}, []);
-
-const fetchTasks = async () => {
-  try {
-    const res = await getTasks();
-    setTasks(res.data || res || []);
-  } catch (err) {
-    console.error("Error fetching tasks:", err);
-    setTasks([]);
-  }
+/* ── status badge colours ── */
+const STATUS_STYLE = {
+  ASSIGNED:    { bg: "#e0f2fe", color: "#0284c7" },
+  ACCEPTED:    { bg: "#dbeafe", color: "#1d4ed8" },
+  IN_PROGRESS: { bg: "#fef3c7", color: "#d97706" },
+  SUBMITTED:   { bg: "#fce7f3", color: "#be185d" },
+  COMPLETED:   { bg: "#dcfce7", color: "#16a34a" },
+  REJECTED:    { bg: "#fee2e2", color: "#dc2626" },
 };
-  const [filter, setFilter] = useState("All");
-  const [role, setRole] = useState("Manager");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [activity, setActivity] = useState([]);
 
+const PRIORITY_COLOR = { HIGH: "#ef4444", MEDIUM: "#f59e0b", LOW: "#22c55e" };
+
+const StatusBadge = ({ status }) => {
+  const s = STATUS_STYLE[status] || { bg: "#f1f5f9", color: "#64748b" };
+  return (
+    <span style={{
+      background: s.bg, color: s.color,
+      fontSize: 11, fontWeight: 700,
+      padding: "3px 10px", borderRadius: 20,
+    }}>
+      {status}
+    </span>
+  );
+};
+
+export default function TaskModule() {
+  const { user } = useContext(AuthContext);
+  const { tasks, fetchTasks, addTask, updateTask } = useContext(TaskContext);
+
+  const role = (user?.role || "employee").toLowerCase();
+  const isAdmin    = role === "admin";
+  const isManager  = role === "manager";
+  const isEmployee = role === "employee";
+  const canManage  = isAdmin || isManager;
+  const userEmail  = user?.email || "";
+
+  /* ── state ── */
+  const [employees, setEmployees]   = useState([]);
+  const [selected, setSelected]     = useState(null);
+  const [loading, setLoading]       = useState(true);
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectBox, setShowRejectBox] = useState(false);
   const [form, setForm] = useState({
-    project: "",
-    priority: "Medium",
-    team: [],
-    deadline: ""
+    title: "", assignee: "", priority: "MEDIUM", dueDate: "", description: "",
   });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  /* ── load tasks on mount ── */
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      await fetchTasks();
+      setLoading(false);
+    };
+    load();
+  }, []);
 
-  const toggleUser = (user) => {
-    setForm(prev => ({
-      ...prev,
-      team: prev.team.includes(user)
-        ? prev.team.filter(u => u !== user)
-        : [...prev.team, user]
-    }));
-  };
+  /* ── load employees for assignee dropdown ── */
+  useEffect(() => {
+    if (!canManage) return;
+    getAllEmployees()
+      .then((res) => {
+        // getAllEmployees() returns response.data directly — already the array
+        const list = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+        const allEmps = Array.isArray(list) ? list : [];
 
-  const addTask = async () => {
-  if (!form.project) return;
-
-  const newTask = {
-    id: Date.now(),
-    ...form,
-    assignedBy: role,
-    assignedDate: new Date().toLocaleDateString(),
-    progress: 0,
-    status: "Assigned",
-    acceptedStatus: "Not Accepted",
-    file: null,
-    remarks: "",
-     // ✅ NEW FIELDS (ADD ONLY THESE)
-  acceptedBy: [],        // employee accepts task
-  accepted: false,       // quick flag (optional but useful)
-  submitted: false,      // employee submitted work
-  approvalStatus: "Pending" // Pending | Approved | Rejected
-  };
-
-  
-
-  try {
-    await createTaskApi({
-  project: newTask.project,
-  priority: newTask.priority,
-  deadline: newTask.deadline,
-  assignedBy: newTask.assignedBy,
-  assignedDate: newTask.assignedDate,
-  progress: newTask.progress,
-  status: newTask.status,
-  team: newTask.team.map(u => u.name) // ✅ IMPORTANT FIX
-});
-  } catch (err) {
-    console.error("Error saving task:", err);
-  }
-
-  // ✅ KEEP YOUR EXISTING LOGIC (NO CHANGE)
-  setTasks([newTask, ...tasks]);
-
-  setActivity(prev => [
-    { text: `Task Assigned: ${form.project}`, time: new Date().toLocaleTimeString() },
-    ...prev
-  ]);
-};
-
-  const updateProgress = (id, value) => {
-    setTasks(tasks.map(t =>
-      t.id === id
-        ? {
-            ...t,
-            progress: value,
-            status: value === 100 ? "Completed" : "In Progress"
-          }
-        : t
-    ));
-  };
-
-  const uploadFile = (id, file) => {
-    setTasks(tasks.map(t =>
-      t.id === id ? { ...t, file } : t
-    ));
-  };
-
- const LOGGED_IN_USER = localStorage.getItem("loggedUser")
-  ? JSON.parse(localStorage.getItem("loggedUser")).email
-  : null;
-
-const userTasks = tasks.filter(t =>
-t.team.some(u =>
-  (typeof u === "string" ? u : u.name)
-    ?.trim()
-    .toLowerCase() === LOGGED_IN_USER?.trim().toLowerCase()
-)
-);
-
-const visibleTasks = role === "Employee" ? userTasks : tasks;
-
-const filtered =
-  filter === "All"
-    ? visibleTasks
-    : visibleTasks.filter(t => t.status === filter);
-
-
-    const updateAcceptance = (id, value) => {
-  setTasks(tasks.map(t =>
-    t.id === id
-      ? {
-          ...t,
-          accepted: value === "Accepted",
-          acceptedStatus: value
+        if (isManager) {
+          // Manager can only assign tasks to their own team members
+          const managerEmail = userEmail;
+          const teamEmps = allEmps.filter(
+            e => (e.managerEmail || "").toLowerCase() === managerEmail.toLowerCase()
+          );
+          setEmployees(teamEmps.length > 0 ? teamEmps : allEmps);
+        } else {
+          setEmployees(allEmps);
         }
-      : t
-  ));
-};
-const submitTask = (id) => {
-  setTasks(tasks.map(t =>
-    t.id === id
-      ? {
-          ...t,
-          submitted: true,
-          submissionStatus: "Submitted"
-        }
-      : t
-  ));
-};
-const updateApproval = (id, value) => {
-  setTasks(tasks.map(t =>
-    t.id === id
-      ? {
-          ...t,
-          approvalStatus: value,
-          status: value === "Approved"
-            ? "Completed"
-            : value === "Rejected"
-              ? "Rejected"
-              : t.status
-        }
-      : t
-  ));
-};
+      })
+      .catch(() => {});
+  }, [canManage, userEmail]);
 
-const adminSummary = {
-  approved: tasks.filter(t => t.approvalStatus === "Approved").length,
-  rejected: tasks.filter(t => t.approvalStatus === "Rejected").length,
-  pending: tasks.filter(t => t.approvalStatus === "Pending").length,
-};
+  /* ── keep selected in sync after refresh ── */
+  useEffect(() => {
+    if (selected) {
+      const updated = tasks.find((t) => t.id === selected.id);
+      if (updated) setSelected(updated);
+    }
+  }, [tasks]);
+
+  /* ── role-filtered task list ── */
+  // For employees: filter client-side to only their tasks
+  // For managers: backend already returns only their team's tasks (via getTasksByManager),
+  //               so trust the backend response directly — no client-side re-filtering needed
+  // For admins: backend returns all tasks
+  const myTasks = isEmployee
+    ? tasks.filter((t) => t.assignee === userEmail)
+    : tasks; // manager and admin: backend already scoped correctly
+
+  /* ── KPIs ── */
+  const kpi = {
+    total:      myTasks.length,
+    pending:    myTasks.filter((t) => t.status === "NEW").length,
+    inProgress: myTasks.filter((t) => t.status === "IN_PROGRESS" || t.status === "ACCEPTED").length,
+    completed:  myTasks.filter((t) => t.status === "COMPLETED").length,
+  };
+
+  /* ── create task ── */
+  const handleCreate = async () => {
+    if (!form.title.trim() || !form.assignee.trim()) {
+      alert("Task title and assignee are required.");
+      return;
+    }
+    try {
+      await addTask({
+        title: form.title,
+        description: form.description,
+        assignee: form.assignee,
+        priority: form.priority,
+        dueDate: form.dueDate || null,
+        status: "ASSIGNED",
+        progress: 0,
+        history: [],
+      });
+      setForm({ title: "", assignee: "", priority: "MEDIUM", dueDate: "", description: "" });
+      await fetchTasks();
+    } catch {
+      alert("Failed to create task. Please try again.");
+    }
+  };
+
+  /* ── employee actions ── */
+  const handleAccept = async (id) => {
+    try { await acceptTaskApi(id); await fetchTasks(); }
+    catch { alert("Failed to accept task."); }
+  };
+
+  const handleReject = async (id) => {
+    try {
+      await rejectTaskApi(id, rejectReason);
+      setShowRejectBox(false); setRejectReason("");
+      await fetchTasks();
+    } catch { alert("Failed to reject task."); }
+  };
+
+  const handleProgress = async (id, progress) => {
+    try {
+      await updateProgressApi(id, progress);
+      updateTask(id, { progress });
+    } catch { /* silent */ }
+  };
+
+  const handleSubmit = async (id) => {
+    try { await submitTaskApi(id); await fetchTasks(); }
+    catch { alert("Failed to submit task."); }
+  };
+
+  /* ── manager/admin actions ── */
+  const handleApprove = async (id) => {
+    try { await approveTaskApi(id); await fetchTasks(); }
+    catch { alert("Failed to approve."); }
+  };
+
+  const handleRejectSubmission = async (id) => {
+    try {
+      await rejectSubmissionApi(id, rejectReason);
+      setShowRejectBox(false); setRejectReason("");
+      await fetchTasks();
+    } catch { alert("Failed to reject submission."); }
+  };
+
+  /* ── delete task (admin only) ── */
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this task?")) return;
+    try {
+      await updateTask(id, { status: "DELETED" });
+      setSelected(null);
+      await fetchTasks();
+    } catch { alert("Failed to delete task."); }
+  };
+
+  /* ── render ── */
   return (
     <div className="task-container">
+      <h2>Task Management</h2>
 
-      {/* KPI */}
-      <div className="kpi">
-        <div>Total Tasks <span>{tasks.length}</span></div>
-        <div>Completed <span>{tasks.filter(t => t.status === "Completed").length}</span></div>
-        <div>Members <span>{dummyUsers.length}</span></div>
+      {/* ── KPI ROW ── */}
+      <div className="kpi-row">
+        <div className="kpi total">
+          <h4>Total</h4>
+          <p>{kpi.total}</p>
+        </div>
+        <div className="kpi pending">
+          <h4>Pending</h4>
+          <p>{kpi.pending}</p>
+        </div>
+        <div className="kpi progress">
+          <h4>In Progress</h4>
+          <p>{kpi.inProgress}</p>
+        </div>
+        <div className="kpi completed">
+          <h4>Completed</h4>
+          <p>{kpi.completed}</p>
+        </div>
       </div>
 
-      {/* ROLE */}
-      <div className="role-switch">
-        {["Admin", "Manager", "Employee"].map(r => (
-          <button key={r} onClick={() => setRole(r)} className={role === r ? "active" : ""}>
-            {r}
-          </button>
-        ))}
-      </div>
-
-      {/* FORM */}
-      {(role !== "Employee") && (
-        <div className="task-form">
-
-          <input name="project" placeholder="Task Name" onChange={handleChange} />
-
-          <select name="priority" onChange={handleChange}>
-            <option>High</option>
-            <option>Medium</option>
-            <option>Low</option>
-          </select>
-
-          <input type="date" name="deadline" onChange={handleChange} />
-
-          {/* CLEAN MULTI SELECT */}
-          <div className="dropdown">
-            <div className="dropdown-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
-              {form.team.length
-                ? form.team.map(u => u.name).join(", ")
-                : "Select Team"}
-            </div>
-
-            {dropdownOpen && (
-              <div className="dropdown-content">
-                {dummyUsers.map(u => (
-                  <label key={u.id}>
-                    <input
-                      type="checkbox"
-                      checked={form.team.includes(u)}
-                      onChange={() => toggleUser(u)}
-                    />
-                    {u.name} ({u.id})
-                  </label>
-                ))}
-              </div>
-            )}
+      {/* ── TRACKING TABLE (admin/manager only) ── */}
+      {canManage && (
+        <div className="tracking-table-container">
+          <h3>Task Tracking Overview</h3>
+          <div className="tracking-table-scroll">
+            <table className="tracking-table">
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Assigned To</th>
+                  <th>Priority</th>
+                  <th>Due Date</th>
+                  <th>Progress</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>
+                      Loading tasks...
+                    </td>
+                  </tr>
+                ) : myTasks.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: "center", color: "#94a3b8", padding: "20px" }}>
+                      No tasks assigned yet
+                    </td>
+                  </tr>
+                ) : (
+                  myTasks.map((task) => (
+                    <tr key={task.id}>
+                      <td>
+                        <div className="task-title-cell">
+                          <strong>{task.title}</strong>
+                          {task.description && (
+                            <span className="task-desc-preview">{task.description}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="assignee-cell">
+                          <span className="assignee-email">{task.assignee}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span
+                          className="priority-badge"
+                          style={{
+                            background: PRIORITY_COLOR[task.priority] || "#94a3b8",
+                            color: "#fff",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            fontSize: "11px",
+                            fontWeight: "700",
+                          }}
+                        >
+                          {task.priority}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="due-date-cell">
+                          {task.dueDate
+                            ? new Date(task.dueDate).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })
+                            : "—"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="progress-cell">
+                          <div className="mini-progress-bar">
+                            <div
+                              className="mini-progress-fill"
+                              style={{ width: `${task.progress || 0}%` }}
+                            />
+                          </div>
+                          <span className="progress-text">{task.progress || 0}%</span>
+                        </div>
+                      </td>
+                      <td>
+                        <StatusBadge status={task.status} />
+                      </td>
+                      <td>
+                        <button
+                          className="view-btn"
+                          onClick={() => {
+                            setSelected(task);
+                            setShowRejectBox(false);
+                          }}
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-
-          <button onClick={addTask}>Assign Task</button>
         </div>
       )}
 
-      {/* FILTER */}
-      <div className="filters">
-        {["All", "Assigned", "In Progress", "Completed"].map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={filter === f ? "active" : ""}>
-            {f}
-          </button>
-        ))}
-      </div>
+      {/* ── CREATE FORM (manager / admin only) ── */}
+      {canManage && (
+        <div className="form-box">
+          <h3>Create Task</h3>
 
-      {/* MAIN */}
-      <div className="main">
+          <input
+            className="task-input"
+            placeholder="Task Title *"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
 
-        {/* TABLE */}
-        <div className="table-box">
-          <table>
-            <thead>
-              <tr>
-                <th>Task</th>
-                <th>Assigned By</th>
-                <th>Date</th>
-                <th>Deadline</th>
-                <th>Team</th>
-                <th>Priority</th>
-                <th>Progress</th>
-                <th>Status</th>
-                <th>Acceptance</th>
-<th>Submission</th>
-<th>Approval</th>
-                <th>Attachment</th>
-              </tr>
-            </thead>
+          <input
+            className="task-input"
+            placeholder="Description (optional)"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
 
-            <tbody>
-              {filtered.map(t => (
-                <tr key={t.id}>
-                  <td>{t.project}</td>
-                  <td>{t.assignedBy}</td>
-                  <td>{t.assignedDate}</td>
-                  <td>{t.deadline}</td>
-
-                  <td>{t.team.map(u => u.name).join(", ")}</td>
-
-                  <td className={`priority ${t.priority}`}>
-                    {t.priority}
-                  </td>
-
-                  <td>
-                    <input
-                      type="range"
-                      value={t.progress}
-                      onChange={(e) =>
-                        updateProgress(t.id, Number(e.target.value))
-                      }
-                    />
-                    {Math.round(t.progress)}%
-                  </td>
-
-                  <td className={`status ${t.status}`}>
-                    {t.status === "Completed" ? <FaCheckCircle /> : <FaClock />}
-                    {t.status}
-                  </td>
-
-                  {/* ACCEPTANCE COLUMN - Employee can accept, others see read-only */}
-                  <td>
-                    {role === "Employee" ? (
-                      <select
-                        value={t.acceptedStatus || "Not Accepted"}
-                        onChange={(e) => updateAcceptance(t.id, e.target.value)}
-                      >
-                        <option value="Not Accepted">Not Accepted</option>
-                        <option value="Accepted">Accepted</option>
-                      </select>
-                    ) : (
-                      t.acceptedStatus || "Not Accepted"
-                    )}
-                  </td>
-
-                  {/* SUBMISSION COLUMN - Employee can submit (after accepting), others see read-only */}
-                  <td>
-                    {role === "Employee" ? (
-                      <select
-                        disabled={t.acceptedStatus !== "Accepted"}
-                        value={t.submissionStatus || "Not Submitted"}
-                        onChange={(e) =>
-                          setTasks(tasks.map(task =>
-                            task.id === t.id
-                              ? {
-                                  ...task,
-                                  submissionStatus: e.target.value,
-                                  submitted: e.target.value === "Submitted"
-                                }
-                              : task
-                          ))
-                        }
-                      >
-                        <option value="Not Submitted">Not Submitted</option>
-                        <option value="Submitted">Submitted</option>
-                      </select>
-                    ) : (
-                      t.submissionStatus || "Not Submitted"
-                    )}
-                  </td>
-
-                  {/* APPROVAL COLUMN - Manager/Admin can approve, Employee sees read-only */}
-                  <td>
-                    {role === "Manager" || role === "Admin" ? (
-                      <select
-                        value={t.approvalStatus || "Pending"}
-                        onChange={(e) => updateApproval(t.id, e.target.value)}
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                      </select>
-                    ) : (
-                      t.approvalStatus || "Pending"
-                    )}
-                  </td>
-
-                  {/* ATTACHMENT */}
-                  <td>
-                    <input
-                      type="file"
-                      onChange={(e) =>
-                        uploadFile(t.id, e.target.files[0])
-                      }
-                    />
-                    {t.file && (
-                      <a href={URL.createObjectURL(t.file)} download>
-                        <FaDownload />
-                      </a>
-                    )}
-                  </td>
-                </tr>
+          {/* Assignee — dropdown if employees loaded, else free text */}
+          {employees.length > 0 ? (
+            <select
+              className="task-input"
+              value={form.assignee}
+              onChange={(e) => setForm({ ...form, assignee: e.target.value })}
+            >
+              <option value="">-- Assign To (employee) *</option>
+              {employees.map((emp) => (
+                <option
+                  key={emp.id || emp.email}
+                  value={emp.email || emp.workEmail || ""}
+                >
+                  {emp.fullName} ({emp.email || emp.workEmail})
+                </option>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </select>
+          ) : (
+            <input
+              className="task-input"
+              placeholder="Assign To (employee email) *"
+              value={form.assignee}
+              onChange={(e) => setForm({ ...form, assignee: e.target.value })}
+            />
+          )}
 
-        {/* ACTIVITY */}
-        <div className="activity">
-          <h3>Live Activity</h3>
-          {activity.map((a, i) => (
-            <div key={i} className="activity-item">
-              <p>{a.text}</p>
-              <span>{a.time}</span>
+          <select
+            className="task-input"
+            value={form.priority}
+            onChange={(e) => setForm({ ...form, priority: e.target.value })}
+          >
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+
+          <input
+            type="date"
+            className="task-input"
+            value={form.dueDate}
+            onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+          />
+
+          <button className="assign-btn" onClick={handleCreate}>
+            Assign Task
+          </button>
+        </div>
+      )}
+
+      {/* ── MAIN LAYOUT: list + detail ── */}
+      <div className="layout">
+
+        {/* LEFT — task list */}
+        <div className="task-list">
+          <h3>Tasks</h3>
+
+          {loading && <p className="task-empty">Loading…</p>}
+          {!loading && myTasks.length === 0 && (
+            <p className="task-empty">No tasks yet.</p>
+          )}
+
+          {myTasks.map((t) => (
+            <div
+              key={t.id}
+              className={`task-item ${selected?.id === t.id ? "active" : ""}`}
+              onClick={() => { setSelected(t); setShowRejectBox(false); }}
+            >
+              <div className="task-item-top">
+                <h4>{t.title}</h4>
+                {isAdmin && (
+                  <button
+                    className="delete-btn"
+                    title="Delete"
+                    onClick={(e) => { e.stopPropagation(); handleDelete(t.id); }}
+                  >
+                    🗑
+                  </button>
+                )}
+              </div>
+              <p className="task-item-sub">
+                {canManage ? `→ ${t.assignee}` : `by ${t.assignedBy || "Manager"}`}
+              </p>
+              <StatusBadge status={t.status} />
             </div>
           ))}
         </div>
 
+        {/* RIGHT — task detail */}
+        {selected ? (
+          <div className="task-detail">
+            <h2>{selected.title}</h2>
+
+            {selected.description && (
+              <p style={{ color: "#64748b", marginBottom: 12 }}>{selected.description}</p>
+            )}
+
+            <div className="detail-grid">
+              <div>
+                <span className="detail-label">Assigned To</span>
+                <span className="detail-value">{selected.assignee || "—"}</span>
+              </div>
+              <div>
+                <span className="detail-label">Assigned By</span>
+                <span className="detail-value">{selected.assignedBy || "—"}</span>
+              </div>
+              <div>
+                <span className="detail-label">Priority</span>
+                <span
+                  className="detail-value"
+                  style={{ color: PRIORITY_COLOR[selected.priority] || "#374151", fontWeight: 700 }}
+                >
+                  {selected.priority || "—"}
+                </span>
+              </div>
+              <div>
+                <span className="detail-label">Due Date</span>
+                <span className="detail-value">
+                  {selected.dueDate
+                    ? new Date(selected.dueDate).toLocaleDateString()
+                    : "—"}
+                </span>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div style={{ margin: "14px 0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#64748b", marginBottom: 4 }}>
+                <span>Progress</span>
+                <span>{selected.progress || 0}%</span>
+              </div>
+              <div className="progress-bar">
+                <div style={{ width: `${selected.progress || 0}%` }} />
+              </div>
+            </div>
+
+            {/* ── EMPLOYEE ACTIONS ── */}
+            {isEmployee && selected.assignee === userEmail && (
+              <div className="action-section">
+                {/* Accept / Reject when ASSIGNED */}
+                {selected.status === "ASSIGNED" && (
+                  <div className="action-row">
+                    <button className="btn-success" onClick={() => handleAccept(selected.id)}>
+                      ✓ Accept
+                    </button>
+                    <button className="btn-danger" onClick={() => setShowRejectBox(true)}>
+                      ✗ Reject
+                    </button>
+                  </div>
+                )}
+
+                {/* Progress slider when ACCEPTED or IN_PROGRESS */}
+                {(selected.status === "ACCEPTED" || selected.status === "IN_PROGRESS") && (
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 6 }}>
+                      Update Progress
+                    </label>
+                    <input
+                      type="range" min="0" max="100"
+                      value={selected.progress || 0}
+                      onChange={(e) => handleProgress(selected.id, parseInt(e.target.value))}
+                      style={{ width: "100%", accentColor: "#2563eb" }}
+                    />
+                    <button
+                      className="btn-primary"
+                      style={{ marginTop: 8 }}
+                      onClick={() => handleSubmit(selected.id)}
+                    >
+                      Submit for Approval
+                    </button>
+                  </div>
+                )}
+
+                {/* Reject reason box */}
+                {showRejectBox && (
+                  <div className="reject-box">
+                    <textarea
+                      placeholder="Reason for rejection (optional)"
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      rows={2}
+                    />
+                    <div className="action-row">
+                      <button className="btn-danger" onClick={() => handleReject(selected.id)}>
+                        Confirm Reject
+                      </button>
+                      <button className="btn-secondary" onClick={() => setShowRejectBox(false)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── MANAGER / ADMIN ACTIONS ── */}
+            {canManage && selected.status === "SUBMITTED" && (
+              <div className="action-section">
+                <p style={{ fontSize: 13, color: "#64748b", marginBottom: 8 }}>
+                  Employee submitted this task for approval.
+                </p>
+                <div className="action-row">
+                  <button className="btn-success" onClick={() => handleApprove(selected.id)}>
+                    ✓ Approve
+                  </button>
+                  <button className="btn-danger" onClick={() => setShowRejectBox(true)}>
+                    ↩ Send Back
+                  </button>
+                </div>
+                {showRejectBox && (
+                  <div className="reject-box">
+                    <textarea
+                      placeholder="Reason for sending back"
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      rows={2}
+                    />
+                    <div className="action-row">
+                      <button className="btn-danger" onClick={() => handleRejectSubmission(selected.id)}>
+                        Confirm
+                      </button>
+                      <button className="btn-secondary" onClick={() => setShowRejectBox(false)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── TRACKING HISTORY ── */}
+            <div className="timeline">
+              <h3>Tracking</h3>
+              {(!selected.history || selected.history.length === 0) ? (
+                <p style={{ fontSize: 13, color: "#94a3b8" }}>No history yet.</p>
+              ) : (
+                selected.history.map((h, i) => (
+                  <div key={i} className="timeline-item">
+                    <div className="timeline-dot" />
+                    <span>{h}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="task-detail task-detail-empty">
+            <p>Select a task to view details</p>
+          </div>
+        )}
       </div>
     </div>
   );

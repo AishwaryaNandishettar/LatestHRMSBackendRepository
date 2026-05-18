@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }) => {
       role: userData.role?.toLowerCase(),
       empId: userData.empId || userData.employeeId, // ✅ Ensure empId is set
       employeeId: userData.employeeId || userData.empId, // ✅ Ensure employeeId is set
+       companyId: userData.companyId   // ✅ ADD THIS LINE HERE
     };
 
     console.log("🔥 LOGIN USER DATA BEFORE STORE:", normalizedUser); // Debug

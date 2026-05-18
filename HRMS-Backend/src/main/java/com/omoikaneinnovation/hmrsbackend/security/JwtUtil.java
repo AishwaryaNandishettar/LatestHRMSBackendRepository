@@ -14,8 +14,8 @@ public class JwtUtil {
     private static final String SECRET =
             "hmrs-super-secret-key-which-must-be-at-least-32-characters";
 
-    // Default expiry (24 hours)
-    private static final long EXPIRATION_MS = 86400000;
+        // Default expiry (6 months)
+    private static final long EXPIRATION_MS = 180L * 24 * 60 * 60 * 1000; // ~180 days
    // private final String SECRET_KEY = "mysecretkey123";
     private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
 

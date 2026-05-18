@@ -8,6 +8,7 @@ public interface AttendanceRepository
         extends MongoRepository<Attendance, String> {
 
     List<Attendance> findByUserId(String userId);
+    List<Attendance> findByUserIdIn(List<String> userIds);
 
     Attendance findByUserIdAndDate(String userId, String date);
 
@@ -15,4 +16,6 @@ public interface AttendanceRepository
     List<Attendance> findByDateStartingWith(String month);
 
     List<Attendance> findByUserIdAndDateStartingWith(String userId, String month);
+    
+    List<Attendance> findByUserIdInAndDateStartingWith(List<String> userIds, String month);
 }

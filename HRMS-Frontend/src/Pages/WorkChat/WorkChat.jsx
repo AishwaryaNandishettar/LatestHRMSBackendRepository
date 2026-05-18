@@ -29,6 +29,7 @@ import {
   sendGroupMessageWS,
   sendEditMessageWS
 } from "../../api/socket";
+import TokenManager from "../../Utils/tokenManager";
 
 /* API */
 import { fetchChatMessages, markChatMessagesSeen, fetchUnreadUsersCount, fetchUnreadMessagesPerUser, fetchLastMessage } from "../../api/chatapi";
@@ -46,6 +47,7 @@ export default function WorkChat() {
   
   // Use global call context
   const { call, incomingCall, callState, startCall, endCall, acceptCall, rejectCall } = useCall();
+<<<<<<< HEAD
 
   // Normalize unread-per-user map keys to lowercase so lookups always work
   // regardless of how the backend returns email casing
@@ -55,6 +57,8 @@ export default function WorkChat() {
       Object.entries(data).map(([k, v]) => [k.trim().toLowerCase(), v])
     );
   };
+=======
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
 
   // Try multiple ways to get the logged-in user's email
   const LOGGED_IN_EMAIL = (() => {
@@ -291,6 +295,7 @@ const handleReply = (msg) => {
     setShowMembers(false);
   }, [selectedChat]);
 
+<<<<<<< HEAD
   // Register the private message handler — separate from the connection so it
   // always points to the latest closure regardless of when the socket connected.
   useEffect(() => {
@@ -377,12 +382,63 @@ const handleReply = (msg) => {
       setPrivateMessageHandler(null);
     };
   }, [TOKEN, LOGGED_IN_EMAIL]);
+=======
+  // Connect WebSocket for chat messages (CallContext handles call signals)
+ useEffect(() => {
+  if (!TOKEN || !LOGGED_IN_EMAIL || socketConnectedForChat.current) return;
+
+  const connectForChat = async () => {
+    try {
+      const activeToken = await TokenManager.getValidToken();
+
+      await connectSocket(
+        LOGGED_IN_EMAIL,
+        activeToken,
+
+        (incomingMsg) => {
+          const current = selectedChatRef.current;
+          if (!current) return;
+
+          const isCurrentChat =
+            (incomingMsg.senderEmail === LOGGED_IN_EMAIL &&
+              incomingMsg.receiverEmail === current.email) ||
+            (incomingMsg.senderEmail === current.email &&
+              incomingMsg.receiverEmail === LOGGED_IN_EMAIL);
+
+          if (!isCurrentChat) return;
+
+          // ❌ prevent duplicate
+         if (
+  incomingMsg.senderEmail === LOGGED_IN_EMAIL &&
+  incomingMsg.receiverEmail === current?.email
+) return;
+
+          setMessages((prev) => [...prev, incomingMsg]);
+        },
+
+        () => {}, // onTask
+        () => {}, // onStatus
+        () => {}  // onChat
+      );
+
+      socketConnectedForChat.current = true;
+
+    } catch (error) {
+      console.error("WebSocket error:", error);
+    }
+  };
+
+  connectForChat();
+}, [TOKEN, LOGGED_IN_EMAIL]);
+
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
 
 
   useEffect(() => {
     if (!TOKEN || !LOGGED_IN_EMAIL) return;
     
     fetchChatUsers(TOKEN)
+<<<<<<< HEAD
       .then(async (data) => {
         const filteredUsers = data.filter((u) => u.email && u.email !== LOGGED_IN_EMAIL);
         
@@ -416,8 +472,31 @@ const handleReply = (msg) => {
         
         console.log("Users with last messages:", usersWithLastMessage); // Debug log
         setUsers(usersWithLastMessage);
+=======
+      .then((data) => {
+        console.log("✅ fetchChatUsers returned:", data);
+       setUsers(
+  Array.from(
+    new Map(
+      (data || []).map((u) => {
+        const email =
+          u.email || u.userEmail || u.empEmail || "";
+        return [email.toLowerCase(), u];
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
       })
-      .catch(() => setUsers([]));
+    ).values()
+  ).filter((u) => {
+    const email =
+      u.email || u.userEmail || u.empEmail || "";
+
+    return email.toLowerCase() !== LOGGED_IN_EMAIL?.toLowerCase();
+  })
+);
+      })
+      .catch((err) => {
+        console.error("❌ fetchChatUsers failed:", err);
+        setUsers([]);
+      });
   }, [TOKEN, LOGGED_IN_EMAIL]);
 
   // Fetch unread users count on mount and periodically
@@ -471,8 +550,9 @@ const handleReply = (msg) => {
   }, [TOKEN]);
 
   useEffect(() => {
-  if (Notification.permission !== "granted") {
-    Notification.requestPermission();
+  // Only request if not already decided (not granted and not denied)
+  if (Notification.permission === "default") {
+    Notification.requestPermission().catch(() => {});
   }
 }, []);
   
@@ -480,6 +560,7 @@ const handleReply = (msg) => {
     if (!TOKEN) return;
     
     fetchMyGroups(TOKEN)
+<<<<<<< HEAD
       .then(async (data) => {
         if (!data || data.length === 0) {
           setGroups([]);
@@ -521,6 +602,9 @@ const handleReply = (msg) => {
         console.log("Groups with last messages:", groupsWithLastMessage); // Debug log
         setGroups(groupsWithLastMessage);
       })
+=======
+      .then((data) => setGroups(data || []))
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
       .catch(() => setGroups([]));
   }, [TOKEN]);
 
@@ -539,7 +623,7 @@ const handleReply = (msg) => {
     setMessages([]);
     fetchChatMessages(
       LOGGED_IN_EMAIL,
-      selectedChat.email,
+      selectedChat?.email,
       TOKEN
     )
       .then((msgs) => {
@@ -582,6 +666,7 @@ useEffect(() => {
   if (!selectedChat || selectedChat.type !== "GROUP" || !TOKEN) return;
 
   setMessages([]);
+<<<<<<< HEAD
 
   // Use a ref to track the current group ID to prevent stale closures
   const currentGroupId = selectedChat.id;
@@ -769,15 +854,93 @@ const sendMessage = async (text, files, replyMessage) => {
     });
   } else if (text.trim()) {
     tempMessages.push({
+=======
+
+  fetchGroupMessages(selectedChat.id, TOKEN)
+    .then(setMessages)
+    .catch(() => setMessages([]));
+
+  // 🔥 subscribe ONCE and cleanup
+  const unsubscribe = subscribeToGroup(selectedChat.id, (groupMsg) => {
+    setMessages((prev) =>
+      prev.some((m) => m.id === groupMsg.id)
+        ? prev // ❌ prevent duplicate
+        : [...prev, groupMsg]
+    );
+  });
+
+  return () => {
+    // 🔥 VERY IMPORTANT (prevents duplicate subscriptions)
+    if (unsubscribe) unsubscribe();
+  };
+
+}, [selectedChat?.id]);  // ✅ ONLY depend on group id
+
+const sendMessage = async (text, files) => {
+  if (!selectedChat) return;
+
+  /* =========================
+     🔥 GROUP CHAT (FIXED)
+  ========================= */
+  if (selectedChat.type === "GROUP") {
+
+    const tempMessage = {
+      // id: Date.now(),
+      groupId: selectedChat.id,
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
       senderEmail: LOGGED_IN_EMAIL,
-      receiverEmail: selectedChat.email,
+      senderName: user?.name || LOGGED_IN_EMAIL,
       content: text,
+<<<<<<< HEAD
       timestamp: new Date().toISOString(),
       replyTo: replyMessage || null,
+=======
+      id: "temp-" + Date.now(),
+timestamp: new Date().toISOString(),
+    };
+
+    
+
+    // ✅ SEND VIA SOCKET
+    sendGroupMessageWS({
+      groupId: selectedChat.id,
+      senderEmail: LOGGED_IN_EMAIL,
+      senderName: user?.name || LOGGED_IN_EMAIL,
+      content: text,
+    });
+
+    return;
+  }
+
+  /* =========================
+     🔥 PRIVATE CHAT (YOUR OLD)
+  ========================= */
+  const tempMessages = [];
+
+  if (files && files.length > 0) {
+    files.forEach((file) => {
+      tempMessages.push({
+        senderEmail: LOGGED_IN_EMAIL,
+        receiverEmail: selectedChat?.email,
+        content: text || "",
+        fileName: file.name,
+        fileUrl: URL.createObjectURL(file),
+        fileType: file.type,
+        timestamp: new Date().toISOString(),
+      });
+    });
+  } else if (text.trim()) {
+    tempMessages.push({
+      senderEmail: LOGGED_IN_EMAIL,
+      receiverEmail: selectedChat?.email,
+      content: text,
+      timestamp: new Date().toISOString(),
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
     });
   }
 
   setMessages((prev) => [...prev, ...tempMessages]);
+<<<<<<< HEAD
   
   // Update last message in users list for sender
   console.log("Updating last message for sent message to:", selectedChat.email, "Content:", text || "File");
@@ -786,12 +949,15 @@ const sendMessage = async (text, files, replyMessage) => {
       ? { ...u, lastMessage: text || "File", lastMessageTime: new Date().toISOString() }
       : u
   ));
+=======
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
 
   try {
     if (files && files.length > 0) {
       const formData = new FormData();
 
       formData.append("senderEmail", LOGGED_IN_EMAIL);
+<<<<<<< HEAD
       formData.append("receiverEmail", selectedChat.email);
       formData.append("text", text || "");
       
@@ -799,22 +965,45 @@ const sendMessage = async (text, files, replyMessage) => {
       if (replyMessage) {
         formData.append("replyTo", JSON.stringify(replyMessage));
       }
+=======
+      formData.append("receiverEmail", selectedChat?.email);
+      formData.append("text", text || "");
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
 
       files.forEach((f) => formData.append("files", f));
 
       await fetch(`${import.meta.env.VITE_API_URL}/chat/upload`, {
+<<<<<<< HEAD
+=======
+        
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
         method: "POST",
         headers: {
           Authorization: `Bearer ${TOKEN}`,
         },
         body: formData,
       });
+<<<<<<< HEAD
     } else {
       sendMessageWS({
         senderEmail: LOGGED_IN_EMAIL,
         receiverEmail: selectedChat.email,
         content: text,
         replyTo: replyMessage || null,
+=======
+
+      // 🔥 force refresh messages after upload
+fetchChatMessages(
+  LOGGED_IN_EMAIL,
+  selectedChat?.email,
+  TOKEN
+).then(setMessages);
+    } else {
+      sendMessageWS({
+        senderEmail: LOGGED_IN_EMAIL,
+        receiverEmail: selectedChat?.email,
+        content: text,
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
       });
     }
   } catch (err) {
@@ -829,6 +1018,7 @@ const sendMessage = async (text, files, replyMessage) => {
       return;
     }
 
+<<<<<<< HEAD
     if (selectedChat.type === "USER") {
       // ── 1-on-1 call ──────────────────────────────────────────────────────
       startCall(type, {
@@ -862,6 +1052,12 @@ const sendMessage = async (text, files, replyMessage) => {
         })
       });
     }
+=======
+    startCall(type, {
+      email: selectedChat?.email,
+      name: selectedChat.name || selectedChat?.email
+    });
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
   };
 
   const filteredMessages = messages.filter((m) =>
@@ -871,6 +1067,7 @@ const sendMessage = async (text, files, replyMessage) => {
   /* ========== RENDER ========== */
   return (
     <div className="wc-root modern-bg">
+<<<<<<< HEAD
       {/* 📞 CALL SCREEN - Floating draggable window, chat stays visible behind it */}
       {(call || incomingCall) && (
         <CallScreen
@@ -889,6 +1086,37 @@ const sendMessage = async (text, files, replyMessage) => {
           waitingForAccept={call?.waitingForAccept ?? false}
           callState={callState}
           currentUserEmail={LOGGED_IN_EMAIL}
+=======
+      {/* 📞 CALL SCREEN - Shows when there's an active call */}
+      {(call || incomingCall) && (
+        <CallScreen
+          user={call?.user || {
+            email: incomingCall?.fromEmail,
+            name: incomingCall?.fromName || incomingCall?.fromEmail
+          }}
+          type={call?.type || incomingCall?.type}
+          onEnd={call ? endCall : rejectCall}
+          onAccept={!call && incomingCall ? acceptCall : undefined}
+          onReject={!call && incomingCall ? rejectCall : undefined}
+          isInitiator={call?.isInitiator || false}
+          callId={call?.callId || incomingCall?.callId}
+          waitingForAccept={call?.waitingForAccept || (!!incomingCall && !call)}
+          callState={callState}
+          currentUserEmail={LOGGED_IN_EMAIL}
+          onSignal={(signal) => {
+            const toEmail = call?.user?.email || incomingCall?.fromEmail;
+            if (!toEmail) {
+              console.warn('Unable to send signal, missing recipient email', { signal, call, incomingCall });
+              return;
+            }
+            console.log('📡 Sending WebRTC signal via WebSocket:', signal);
+            sendCallSignal({
+              ...signal,
+              fromEmail: LOGGED_IN_EMAIL,
+              toEmail
+            });
+          }}
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
         />
       )}
 
@@ -1114,6 +1342,7 @@ const sendMessage = async (text, files, replyMessage) => {
                   callState={callState}
                 />
 
+<<<<<<< HEAD
                 <ChatMessages
                   messages={filteredMessages}
                   loggedInEmail={LOGGED_IN_EMAIL}
@@ -1122,6 +1351,9 @@ const sendMessage = async (text, files, replyMessage) => {
                   onReply={handleReply}
                   onForward={handleForward}
                 />
+=======
+                <ChatMessages messages={filteredMessages} loggedInEmail={LOGGED_IN_EMAIL} />
+>>>>>>> 8919f074616fdc41654f6b90fe9b7dec0c5a93c6
 
                <ChatComposer
   onSend={sendMessage}

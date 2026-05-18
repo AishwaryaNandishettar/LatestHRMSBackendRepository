@@ -193,9 +193,275 @@
   border-radius: 50%;
 }
 
-.reportName {
+/* ================= RESIGNATION LETTER TEMPLATE ================= */
+
+.resignationLetterTemplate {
+  background: linear-gradient(135deg, #fff7ed, #fed7aa);
+  border: 2px solid #f97316;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+}
+
+.resignationLetterTemplate h4 {
+  color: #ea580c;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  text-align: center;
+}
+
+.letterContent {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid #fed7aa;
+  font-family: 'Times New Roman', serif;
+  line-height: 1.6;
+  color: #1f2937;
+}
+
+.letterContent p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.letterContent strong {
   font-weight: 600;
+  color: #374151;
+}
+
+/* ================= REPORTING LABEL ENHANCEMENT ================= */
+
+.reportingLabel {
+  font-size: 10px;
+  color: #6b7280;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* ================= GMAIL-LIKE INPUT STYLING ================= */
+
+.gmailInputContainer {
+  position: relative;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  min-height: 40px;
+  padding: 4px 8px;
+  margin-bottom: 12px;
+}
+
+.gmailInputContainer:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.gmailChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+}
+
+.gmailChip {
+  display: inline-flex;
+  align-items: center;
+  background: #e5e7eb;
+  color: #374151;
+  padding: 4px 8px;
+  border-radius: 16px;
   font-size: 13px;
+  font-weight: 500;
+  gap: 6px;
+}
+
+.gmailChip button {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.gmailChip button:hover {
+  background: #d1d5db;
+  color: #dc2626;
+}
+
+.gmailInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  min-width: 100px;
+  padding: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.gmailInput::placeholder {
+  color: #9ca3af;
+}
+
+.gmailSuggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 2px;
+}
+
+.gmailSuggestionItem {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease;
+}
+
+.gmailSuggestionItem:hover {
+  background-color: #f3f4f6;
+}
+
+.gmailSuggestionItem:last-child {
+  border-bottom: none;
+}
+
+.suggestionName {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.suggestionEmail {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* ================= SKILLS HEADER ================= */
+
+.skillsHeader {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #3b82f6;
+}
+
+.skillsHeader h3 {
+  color: #1d4ed8;
+  font-weight: 700;
+  margin: 0;
+  font-size: 16px;
+}
+
+/* ================= SKILL FORM ================= */
+
+.skillForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.skillForm textarea {
+  grid-column: 1 / -1;
+  min-height: 60px;
+  resize: vertical;
+}
+
+.skillForm button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: auto;
+  padding: 8px 16px;
+}
+
+/* ================= COMMENT INPUT ================= */
+
+.commentInput {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.commentInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* ================= RESPONSIVE IMPROVEMENTS ================= */
+
+@media (max-width: 768px) {
+  .profileContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .profileLeft {
+    width: 100%;
+  }
+  
+  .profileGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .skillForm {
+    grid-template-columns: 1fr;
+  }
+  
+  .table {
+    font-size: 12px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 6px 4px;
+  }
+  
+  .gmailChips {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .gmailChip {
+    align-self: flex-start;
+  }
+  
+  .letterContent {
+    padding: 16px;
+    font-size: 13px;
+  }
 }
 
 /* DOCUMENTS */
@@ -311,13 +577,14 @@
 .table td {
   border: 1px solid #e5e7eb;
   padding: 8px;
+  text-align: center;
 }
 
 .table th {
   background: #2563eb;   /* 🔥 blue header */
   color: #ffffff;        /* white text */
   font-weight: 600;
-  text-align: left;
+  text-align: center;
 }
 .table th {
   background: linear-gradient(90deg, #2563eb, #1e40af);
@@ -598,4 +865,209 @@
   color: white;
   padding: 8px 14px;
   border: none;
+}
+.imageWrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: auto;
+}
+
+.profileImage {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.editImageBtn {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: #000;
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  cursor: pointer;
+}
+.actionGroup {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* View button - attractive outline style */
+.viewBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #4a90e2;
+  background: transparent;
+  color: #4a90e2;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.3s ease;
+}
+
+.viewBtn:hover {
+  background: #4a90e2;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Download button - solid style */
+.downloadBtn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.3s ease;
+}
+
+.downloadBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.inputBox {
+  border: 1px solid #ddd;
+  padding: 6px;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.chipContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.chip {
+  background: #e8f0fe;
+  color: #1a73e8;
+  padding: 4px 8px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.chip button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.suggestionBox {
+  border: 1px solid #ddd;
+  background: white;
+  max-height: 150px;
+  overflow-y: auto;
+  position: absolute;
+  z-index: 10;
+  width: 300px;
+}
+
+.suggestionItem {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.suggestionItem:hover {
+  background: #f1f3f4;
+}
+.modal {
+  pointer-events: auto;
+}
+
+.modalOverlay {
+  pointer-events: all;
+}
+.fullWidth {
+  grid-column: span 2; /* makes it take full row */
+}
+
+.bigTextarea {
+  width: 100%;
+  min-height: 120px;   /* 👈 BIG FIELD */
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  resize: vertical;    /* allow user to expand */
+  font-size: 14px;
+}
+.addressBox {
+  grid-column: span 2;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 10px;
+}
+
+.addressLabel {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.addressTextarea {
+  width: 100%;
+  min-height: 100px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  resize: vertical;
+  font-size: 14px;
+}
+
+.addressRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.addressRow input {
+  flex: 1;
+}
+
+
+/* ===== RESIGNATION APPROVAL BUTTONS ===== */
+
+.approveBtn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.approveBtn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.rejectBtn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.rejectBtn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
 }

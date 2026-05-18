@@ -34,6 +34,11 @@ public class LeaveController {
 public List<LeaveRequest> getAllLeaves() {
     return leaveService.getAllLeaves();
 }  
+@GetMapping("/manager-leaves")
+public List<LeaveRequest> getManagerLeaves(@RequestParam String managerEmail) {
+    return leaveService.getLeavesByManager(managerEmail);
+}
+
 @PutMapping("/{id}/status")
 public LeaveRequest updateStatus(
         @PathVariable String id,

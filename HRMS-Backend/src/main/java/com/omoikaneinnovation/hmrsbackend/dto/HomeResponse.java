@@ -20,6 +20,17 @@ public class HomeResponse {
     //List<Map<String, Object>> attendanceGraph
     private List<Map<String, Object>> attendanceGraph;
 private List<Map<String, Object>> leaveGraph;
+private List<Map<String, Object>> leaveUsers;
+// ✅ Weekly off days configured by admin (e.g. ["SATURDAY","SUNDAY"])
+private List<String> weeklyOffDays;
+
+public List<Map<String, Object>> getLeaveUsers() {
+    return leaveUsers;
+}
+
+public void setLeaveUsers(List<Map<String, Object>> leaveUsers) {
+    this.leaveUsers = leaveUsers;
+}
     /* ================= STATS ================= */
   @Data
 @AllArgsConstructor
@@ -34,6 +45,21 @@ public static class Stats {
     // ✅ ADD THESE (for service compatibility)
     private int totalDays;
     private int leaves;
+    
+    // ✅ NEW: Employee count fields for admin dashboard
+    private int totalEmployees;
+    private int activeEmployees;
+    
+    // ✅ NEW: Leave and Payroll KPI fields
+    private int leavePending;
+    private double payrollTotal;
+
+    // ✅ NEW: Accurate attendance fields (working days aware)
+    private int workingDays;        // total working days this month (excl. weekends + holidays)
+    private int checkedInDays;      // days user actually checked in
+    private int absentDays;         // working days with no check-in and no approved leave
+    private int approvedLeaveDays;  // approved leave days this month
+    private double attendancePercentage; // (checkedInDays / workingDays) * 100
 }
     /* ================= SALARY ================= */
     @Data
@@ -57,8 +83,10 @@ public static class Stats {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Event {
+        private String id;
         private String title;
         private String date;
-        private String type;   // 🔥 ADD THIS
+        private String type;
+        private String description;
     }
 }

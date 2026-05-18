@@ -38,7 +38,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     logout();
     navigate("/");
   };
-
+const handleMenuClick = () => {
+  if (window.innerWidth <= 768) {
+    setIsOpen(false);
+  }
+};
   return (
     <div
       className={`${styles.sidebarContainer} ${
@@ -57,7 +61,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         {isOpen && "Employee Portal"}
       </h2>
 
-      <ul className={styles.sidebarMenu}>
+     <ul className={styles.sidebarMenu} onClick={handleMenuClick}>
        
 
         {/* BASIC */}
@@ -122,15 +126,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           </NavLink>
         </li>
 
-        {/* ✅ NEW: PERFORMANCE (Admin + HR) */}
-        {(role === "admin" || role === "hr") && (
-          <li>
-            <NavLink to="/performance">
-              <FaChartLine />
-              {isOpen && <span>Performance</span>}
-            </NavLink>
-          </li>
-        )}
+<li>
+  <NavLink to="/helpdesk">
+    <FaComments />
+    {isOpen && <span>Helpdesk</span>}
+  </NavLink>
+</li>
+        {/* ✅ PERFORMANCE (All users can view performance) */}
+        <li>
+          <NavLink to="/performance">
+            <FaChartLine />
+            {isOpen && <span>Performance</span>}
+          </NavLink>
+        </li>
 
         {/* PAYROLL */}
         {(role === "employee" || role === "manager" || role === "admin") && (

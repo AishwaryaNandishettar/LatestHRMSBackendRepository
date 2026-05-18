@@ -5,6 +5,7 @@ import com.omoikaneinnovation.hmrsbackend.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+
 @Service
 public class AuthService {
 
@@ -21,6 +22,7 @@ public class AuthService {
 
              // 👇 ADD THIS LINE (TEMPORARY)
     System.out.println("HASHED PASSWORD: " + encoder.encode("admin123"));
+    System.out.println("HASHED PASSWORD: " + encoder.encode("Manager@123"));
 
         // prevent duplicate email
         if (repo.findByEmail(user.getEmail()).isPresent()) {
@@ -37,8 +39,11 @@ public class AuthService {
 
     return repo.findByEmail(email)
             .map(user -> {
-                System.out.println("Entered Password: " + rawPassword);
-                System.out.println("Stored Hash: " + user.getPassword());
+                System.out.println("===== LOGIN DEBUG =====");
+                System.out.println("EMAIL: " + email);
+                System.out.println("RAW PASSWORD: " + rawPassword);
+                System.out.println("DB PASSWORD: " + user.getPassword());
+                System.out.println("MATCH: " + encoder.matches(rawPassword, user.getPassword()));
 
                 boolean match = encoder.matches(rawPassword, user.getPassword());
                 System.out.println("Password Match: " + match);
@@ -46,5 +51,21 @@ public class AuthService {
                 return match ? user : null;
             })
             .orElse(null);
+}
+
+public void changePassword(String email, String oldPassword, String newPassword) {
+
+    User user = repo.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+    // check old password
+    if (!encoder.matches(oldPassword, user.getPassword())) {
+        throw new RuntimeException("Old password is incorrect");
+    }
+
+    // set new password (ENCODED)
+    user.setPassword(encoder.encode(newPassword));
+
+    repo.save(user);
 }
 }

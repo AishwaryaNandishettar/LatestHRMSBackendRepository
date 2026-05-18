@@ -15,6 +15,19 @@ export const fetchMyMeetings = async (email, token) => {
     {
       headers: {
         Authorization: `Bearer ${token}`,
+        
+      },
+    }
+  );
+  return res.data;
+};
+
+export const fetchMeetingById = async (id, token) => {
+  const res = await axios.get(
+    `${BASE_URL}/${id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
     }
   );

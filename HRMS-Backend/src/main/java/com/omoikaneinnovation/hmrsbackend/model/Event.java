@@ -20,6 +20,7 @@ public class Event {
     private String id;
     private String title;
     private String date;
-      private String type;   // 🔥 NEW: HR / MEETING / HOLIDAY
-       private String createdBy; // HR/Admin userId
+    private String type;        // HR / Meeting / Holiday / Payroll
+    private String description; // Full description shown on detail page
+    private String createdBy;   // HR/Admin userId
 }
