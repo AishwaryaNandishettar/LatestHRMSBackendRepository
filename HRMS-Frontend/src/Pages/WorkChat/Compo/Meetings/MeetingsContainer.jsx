@@ -7,48 +7,40 @@ import MeetingCalendar from "./MeetingCalendar";
 import { fetchMyMeetings } from "../../../../api/meetingApi";
 import { fetchChatUsers } from "../../../../api/chatUsersApi";
 
-export default function MeetingsContainer({ onClose }) {
+/**
+ * MeetingsContainer — shows the calendar and meeting form.
+ *
+ * Props:
+ *   onClose()              — close the calendar panel
+ *   onJoinMeeting(meeting) — called when the user confirms joining;
+ *                            the parent (WorkChat) owns activeMeeting so
+ *                            the meeting room survives this panel closing.
+ */
+export default function MeetingsContainer({ onClose, onJoinMeeting }) {
   const { user } = useContext(AuthContext);
 
-  const [meetings, setMeetings] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [showForm, setShowForm] = useState(false);
+  const [meetings, setMeetings]           = useState([]);
+  const [users, setUsers]                 = useState([]);
+  const [showForm, setShowForm]           = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState(null);
 
-  /* -----------------------------
-     LOAD MEETINGS
-  ------------------------------ */
+  /* ── Load meetings ─────────────────────────────────────────────────────── */
   useEffect(() => {
     if (!user?.email || !user?.token) return;
-
     fetchMyMeetings(user.email, user.token)
-      .then((data) => {
-        console.log('📅 Meetings loaded:', data);
-        setMeetings(data);
-      })
-      .catch((err) => {
-        console.error("Fetch meetings failed", err);
-        setMeetings([]);
-      });
+      .then((data) => setMeetings(data))
+      .catch(() => setMeetings([]));
   }, [user]);
 
-  /* -----------------------------
-     LOAD USERS (FOR AUTOSUGGEST)
-  ------------------------------ */
+  /* ── Load users for autosuggest ────────────────────────────────────────── */
   useEffect(() => {
     if (!user?.token) return;
-
     fetchChatUsers(user.token)
       .then(setUsers)
-      .catch((err) => {
-        console.error("Fetch users failed", err);
-        setUsers([]);
-      });
+      .catch(() => setUsers([]));
   }, [user]);
 
-  /* -----------------------------
-     15 MIN NOTIFICATION
-  ------------------------------ */
+  /* ── 15-min notification ───────────────────────────────────────────────── */
   useEffect(() => {
     const timer = setInterval(() => {
       meetings.forEach((m) => {
@@ -58,40 +50,48 @@ export default function MeetingsContainer({ onClose }) {
         }
       });
     }, 60000);
-
     return () => clearInterval(timer);
   }, [meetings]);
 
-  /* -----------------------------
-     CALENDAR HANDLERS
-  ------------------------------ */
+  /* ── Calendar handlers ─────────────────────────────────────────────────── */
   const handleDateSelect = (date) => {
     const start = new Date(date);
     start.setHours(10, 0, 0, 0);
-
     const end = new Date(start);
     end.setHours(11, 0, 0, 0);
-
-    setSelectedMeeting({
-      startTime: start.toISOString(),
-      endTime: end.toISOString()
-    });
-
+    setSelectedMeeting({ startTime: start.toISOString(), endTime: end.toISOString() });
     setShowForm(true);
   };
 
   const handleEventEdit = (meeting) => {
-    // Check if the meeting has already ended
     const now = new Date();
-    const meetingEndTime = new Date(meeting.endTime);
-    
-    if (meetingEndTime < now) {
+    if (new Date(meeting.endTime) < now) {
       alert('Cannot edit a meeting that has already ended.');
       return;
     }
-    
     setSelectedMeeting(meeting);
     setShowForm(true);
+  };
+
+  /* ── Join handler — delegates to parent ───────────────────────────────── */
+  const handleJoinMeeting = (meeting) => {
+    const now = new Date();
+    const start = new Date(meeting.startTime);
+    const end   = new Date(meeting.endTime);
+    const canJoinTime = new Date(start.getTime() - 15 * 60 * 1000);
+
+    if (now < canJoinTime) {
+      alert(`Meeting starts at ${start.toLocaleString()}. You can join 15 minutes before.`);
+      return;
+    }
+    if (now > end) {
+      alert('This meeting has already ended.');
+      return;
+    }
+
+    // Hand off to WorkChat — it owns activeMeeting so the room survives
+    // this panel closing.
+    if (onJoinMeeting) onJoinMeeting(meeting);
   };
 
   return (
@@ -99,51 +99,37 @@ export default function MeetingsContainer({ onClose }) {
       {/* HEADER */}
       <div className="wc-meetings-header">
         <h3>Meetings</h3>
-
         <div style={{ display: "flex", gap: "8px" }}>
           <button
             className="btn-primary"
-            onClick={() => {
-              setSelectedMeeting(null);
-              setShowForm(true);
-            }}
+            onClick={() => { setSelectedMeeting(null); setShowForm(true); }}
           >
             + Schedule Meeting
           </button>
-
           <button onClick={onClose}>✕</button>
         </div>
       </div>
 
       {/* CALENDAR */}
-      <MeetingCalendar 
-        key={meetings.length + meetings.map(m => m.status).join('')} // Force re-render when meetings change
-        meetings={meetings} 
+      <MeetingCalendar
+        meetings={meetings}
         onSelect={handleDateSelect}
         onEdit={handleEventEdit}
+        onJoin={handleJoinMeeting}
       />
 
-      {/* MODAL */}
+      {/* SCHEDULE / EDIT FORM */}
       {showForm && (
         <MeetingForm
           meeting={selectedMeeting}
-          token={user.token}      // ✅ EXPLICIT
-          users={users}           // ✅ FOR AUTOSUGGEST
+          token={user.token}
+          users={users}
           onClose={() => setShowForm(false)}
-          onSaved={(m) => {
-            console.log('📅 Meeting saved/updated:', m);
-            
-            // Always refresh the meetings list after saving
+          onSaved={() => {
             if (user?.email && user?.token) {
-              console.log('📅 Refreshing meetings list...');
               fetchMyMeetings(user.email, user.token)
-                .then((data) => {
-                  console.log('📅 Meetings refreshed:', data);
-                  setMeetings(data);
-                })
-                .catch((err) => {
-                  console.error("Failed to refresh meetings", err);
-                });
+                .then(setMeetings)
+                .catch(() => {});
             }
             setShowForm(false);
           }}

@@ -20,29 +20,14 @@ export default function CreateGroupModal({
   };
 
   const create = async () => {
-    if (!groupName.trim()) {
-      alert("Group name required");
-      return;
-    }
-
-    if (members.length === 0) {
-      alert("Select at least one member");
-      return;
-    }
+    if (!groupName.trim()) return alert("Group name required");
+    if (members.length === 0) return alert("Select at least one member");
 
     try {
       setLoading(true);
-
-      const group = await createGroup(
-        {
-          groupName,
-          members,
-        },
-        token
-      );
-
-      onCreated(group); // add to sidebar
-      onClose();        // close modal
+      const group = await createGroup({ groupName, members }, token);
+      onCreated(group);
+      onClose();
     } catch (err) {
       console.error(err);
       alert("Failed to create group");
@@ -52,46 +37,67 @@ export default function CreateGroupModal({
   };
 
   return (
-    <div className="wc-modal-backdrop">
-      <div className="wc-modal group-modal">
-        <h3>Create Group</h3>
+    <div className="cg-backdrop" onClick={onClose}>
+      <div className="cg-modal" onClick={(e) => e.stopPropagation()}>
 
-        <input
-          placeholder="Group name"
-          value={groupName}
-          onChange={(e) => setGroupName(e.target.value)}
-        />
+        {/* HEADER */}
+        <div className="cg-header">
+          <h3>Create Group</h3>
+          <button onClick={onClose}>✕</button>
+        </div>
 
-        <div className="wc-modal-users">
-          {users.length === 0 && (
-            <div>No users available</div>
-          )}
+        {/* GROUP NAME */}
+        <div className="cg-input">
+          <input
+            placeholder="Enter group name..."
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+          />
+        </div>
+
+        {/* SELECTED MEMBERS (CHIPS) */}
+        {members.length > 0 && (
+          <div className="cg-chips">
+            {members.map((m) => (
+              <span key={m} onClick={() => toggle(m)}>
+                {m.split("@")[0]} ✕
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* USERS LIST */}
+        <div className="cg-users">
+          {users.length === 0 && <p>No users available</p>}
 
           {users.map((u) => (
-            <label key={u.email}>
-              <input
-                type="checkbox"
-                checked={members.includes(u.email)}
-                onChange={() => toggle(u.email)}
-              />
-              {u.name}
-            </label>
+            <div
+              key={u.email}
+              className={`cg-user ${members.includes(u.email) ? "selected" : ""}`}
+              onClick={() => toggle(u.email)}
+            >
+              <div className="cg-avatar">
+                {u.name?.charAt(0).toUpperCase()}
+              </div>
+
+              <div className="cg-info">
+                <div>{u.name}</div>
+                <small>{u.email}</small>
+              </div>
+
+              {members.includes(u.email) && <div className="cg-check">✓</div>}
+            </div>
           ))}
         </div>
 
-        <div className="wc-modal-actions">
-          <button type="button" onClick={onClose}>
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            onClick={create}
-            disabled={loading}
-          >
-            {loading ? "Creating..." : "Create"}
+        {/* ACTIONS */}
+        <div className="cg-actions">
+          <button onClick={onClose}>Cancel</button>
+          <button onClick={create} disabled={loading}>
+            {loading ? "Creating..." : "Create Group"}
           </button>
         </div>
+
       </div>
     </div>
   );

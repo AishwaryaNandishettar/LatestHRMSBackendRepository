@@ -66,46 +66,55 @@ export default function ChatSidebar({
   onSelectUser,
   onSelectGroup,
   onCreateGroup,
+  messageCount = 0,
+  groupCount = 0,
+  unreadPerUser = {},
+  unreadPerGroup = {},
 }) {
 
   const [search, setSearch] = useState("");
 
   /* =========================
-     MERGE USERS + GROUPS
+     SEPARATE USERS AND GROUPS
   ========================= */
 
-  const chats = useMemo(() => {
-
-    const userChats = users.map((u) => ({
+  const userChats = useMemo(() => {
+    return users.map((u) => ({
       ...u,
       type: "USER",
       id: u.email,
       name: u.name,
       pinned: u.pinned || false
     }));
+  }, [users]);
 
-    const groupChats = groups.map((g) => ({
+  const groupChats = useMemo(() => {
+    return groups.map((g) => ({
       ...g,
       type: "GROUP",
       id: g.id,
       name: g.name,
       pinned: g.pinned || false
     }));
-
-    return [...userChats, ...groupChats];
-
-  }, [users, groups]);
+  }, [groups]);
 
   /* =========================
      SEARCH FILTER
   ========================= */
 
-  const filteredChats = chats.filter((chat) =>
+  const filteredUsers = userChats.filter((chat) =>
     chat?.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const pinnedChats = filteredChats.filter((c) => c.pinned);
-  const normalChats = filteredChats.filter((c) => !c.pinned);
+  const filteredGroups = groupChats.filter((chat) =>
+    chat?.name?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const pinnedUsers = filteredUsers.filter((c) => c.pinned);
+  const normalUsers = filteredUsers.filter((c) => !c.pinned);
+
+  const pinnedGroups = filteredGroups.filter((c) => c.pinned);
+  const normalGroups = filteredGroups.filter((c) => !c.pinned);
 
   /* =========================
      SELECT CHAT
@@ -155,36 +164,70 @@ export default function ChatSidebar({
         </div>
       ))}
 
-      {/* PINNED */}
-      {pinnedChats.length > 0 && (
+      {/* PINNED USERS */}
+      {pinnedUsers.length > 0 && (
         <>
           <div className="sidebar-label">Pinned</div>
-
-          {pinnedChats.map((chat) => (
+          {pinnedUsers.map((chat) => (
             <ChatItem
               key={chat.id}
               chat={chat}
               selectedChat={selectedChat}
               onClick={handleSelect}
+              unreadCount={unreadPerUser[chat.email?.toLowerCase()] || 0}
             />
           ))}
         </>
       )}
 
-      {/* ALL CHATS */}
-      <div className="sidebar-label">Chats</div>
+      {/* ALL CHATS (1-to-1 only) */}
+      <div className="sidebar-label">
+        Chats {messageCount > 0 && <span className="sidebar-label-count">({messageCount})</span>}
+      </div>
 
       <div className="chat-list">
-
-        {normalChats.map((chat) => (
+        {normalUsers.map((chat) => (
           <ChatItem
             key={chat.id}
             chat={chat}
             selectedChat={selectedChat}
             onClick={handleSelect}
+            unreadCount={unreadPerUser[chat.email?.toLowerCase()] || 0}
           />
         ))}
+      </div>
 
+      {/* PINNED GROUPS */}
+      {pinnedGroups.length > 0 && (
+        <>
+          <div className="sidebar-label">Pinned Groups</div>
+          {pinnedGroups.map((chat) => (
+            <ChatItem
+              key={chat.id}
+              chat={chat}
+              selectedChat={selectedChat}
+              onClick={handleSelect}
+              unreadCount={unreadPerGroup[chat.id] || 0}
+            />
+          ))}
+        </>
+      )}
+
+      {/* ALL GROUPS */}
+      <div className="sidebar-label">
+        Groups {groupCount > 0 && <span className="sidebar-label-count">({groupCount})</span>}
+      </div>
+
+      <div className="chat-list">
+        {normalGroups.map((chat) => (
+          <ChatItem
+            key={chat.id}
+            chat={chat}
+            selectedChat={selectedChat}
+            onClick={handleSelect}
+            unreadCount={unreadPerGroup[chat.id] || chat.unread || 0}
+          />
+        ))}
       </div>
 
       {/* FOOTER */}
@@ -197,70 +240,61 @@ export default function ChatSidebar({
 }
 
 /* =========================
-   CHAT ITEM
+   CHAT ITEM — Teams-style
 ========================= */
 
-function ChatItem({ chat, selectedChat, onClick }) {
-
+function ChatItem({ chat, selectedChat, onClick, unreadCount = 0 }) {
   const isActive =
     selectedChat?.type === chat.type &&
-    (selectedChat?.email === chat.email ||
-      selectedChat?.id === chat.id);
+    selectedChat?.id === chat.id;
+
+  const hasUnread = unreadCount > 0;
 
   return (
     <div
-      className={`chat-user ${isActive ? "active" : ""}`}
+      className={`chat-user${isActive ? " active" : ""}${hasUnread ? " has-unread" : ""}`}
       onClick={() => onClick(chat)}
     >
-
       {/* AVATAR */}
-      <div
-        className="avatar"
-        style={{ background: getAvatarColor(chat.name) }}
-      >
+      <div className="avatar" style={{ background: getAvatarColor(chat.name) }}>
         {getInitials(chat.name)}
-
-        {/* ONLINE DOT */}
+        {/* Online dot for 1-on-1 chats */}
         {chat.type === "USER" && (
-          <span
-            className={`status-dot ${chat.online ? "online" : "offline"}`}
-          />
+          <span className={`status-dot ${chat.online ? "online" : "offline"}`} />
+        )}
+        {/* Blue unread dot (Teams-style) — shown when there are unread messages */}
+        {hasUnread && !isActive && (
+          <span className="unread-dot" aria-hidden="true" />
         )}
       </div>
 
       {/* CHAT INFO */}
       <div className="info">
-
         <div className="top-row">
-
-          <div className="name">{chat.name}</div>
-
+          {/* Name — bold when unread */}
+          <div className={`name${hasUnread && !isActive ? " name--unread" : ""}`}>
+            {chat.name}
+          </div>
           <div className="meta">
-
             {chat.pinned && <FaThumbtack className="pin-icon" />}
-
-            <span className="time">
+            <span className={`time${hasUnread && !isActive ? " time--unread" : ""}`}>
               {formatTime(chat.lastMessageTime)}
             </span>
-
           </div>
-
         </div>
 
-        {/* LAST MESSAGE */}
-        <div className="message-preview">
+        {/* Last message preview — bold when unread */}
+        <div className={`message-preview${hasUnread && !isActive ? " message-preview--unread" : ""}`}>
           {chat.lastMessage || "No messages yet"}
         </div>
-
       </div>
 
-      {/* UNREAD */}
-      {chat.unread > 0 && (
-        <div className="unread-badge animate">
-          {chat.unread}
+      {/* Unread count badge — red pill (Teams-style) */}
+      {hasUnread && !isActive && (
+        <div className="unread-badge" aria-label={`${unreadCount} unread messages`}>
+          {unreadCount > 99 ? "99+" : unreadCount}
         </div>
       )}
-
     </div>
   );
 }

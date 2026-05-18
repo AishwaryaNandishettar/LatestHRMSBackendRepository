@@ -9,20 +9,24 @@
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 10001;
-  animation: slideInRight 0.3s ease-out;
   min-width: 250px;
   max-width: 400px;
+  animation: toastIn 0.3s ease-out forwards;
 }
 
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+/* Fade-out triggered by adding the class via JS — handled by duration prop */
+.toast-exit {
+  animation: toastOut 0.3s ease-in forwards;
+}
+
+@keyframes toastIn {
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes toastOut {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(110%); opacity: 0; }
 }
 
 .toast-success {

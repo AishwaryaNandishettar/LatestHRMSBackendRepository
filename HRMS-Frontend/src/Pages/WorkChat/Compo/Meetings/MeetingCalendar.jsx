@@ -3,163 +3,225 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
-function MeetingCalendar({ meetings, onSelect, onEdit }) {
+function MeetingCalendar({ meetings, onSelect, onEdit, onJoin }) {
   const now = new Date();
 
-  const events = meetings.map((m) => {
-    const meetingEndTime = new Date(m.endTime);
-    const isPastMeeting = meetingEndTime < now;
+  // ✅ Generate recurring event instances (FIXED)
+const generateRecurringInstances = (meeting) => {
+  const instances = [];
+  const startDate = new Date(meeting.startTime);
+  const endDate = new Date(meeting.endTime);
+  const isCancelled = meeting.status === "Cancelled";
 
-    console.log(`📅 Meeting "${m.title}" - Status: "${m.status}", isPast: ${isPastMeeting}, ID: ${m.id}`);
+  let currentDate = new Date(startDate);
+  let count = 0;
+  const maxInstances = 365;
 
-    const event = {
-      id: m.id,
-      title: m.title,
-      start: m.startTime,
-      end: m.endTime,
-      color: isPastMeeting
-        ? "#9ca3af"  // Gray for past meetings
-        : "#4f46e5", // Blue for all active meetings (cancelled will be styled with strikethrough)
-      classNames: m.status === "Cancelled" ? ["cancelled-meeting"] : [],
+  // If repeat is enabled but no valid end condition is present, do not generate an endless series.
+  if (!meeting.repeatUntil && !meeting.repeatCount) {
+    const instanceStart = new Date(startDate);
+    const instanceEnd = new Date(endDate);
+
+    return [
+      {
+        id: `${meeting.id}-${instanceStart.getTime()}`,
+        title: meeting.title,
+        start: instanceStart,
+        end: instanceEnd,
+        allDay: false,
+        display: "block",
+        color: isCancelled ? "#dc2626" : "#4f46e5",
+        classNames: isCancelled ? ["cancelled-meeting"] : [],
+        extendedProps: {
+          status: meeting.status,
+          originalMeeting: meeting,
+        },
+      },
+    ];
+  }
+
+  while (count < maxInstances) {
+    if (meeting.repeatUntil) {
+      const until = new Date(meeting.repeatUntil);
+      if (currentDate > until) break;
+    }
+
+    if (meeting.repeatCount) {
+      if (count >= meeting.repeatCount) break;
+    }
+
+    const instanceStart = new Date(currentDate);
+    const instanceEnd = new Date(currentDate);
+    instanceEnd.setHours(endDate.getHours(), endDate.getMinutes(), endDate.getSeconds(), endDate.getMilliseconds());
+
+    instances.push({
+      id: `${meeting.id}-${currentDate.getTime()}`,
+      title: meeting.title,
+      start: instanceStart,
+      end: instanceEnd,
+      allDay: false,
+      display: "block",
+      color: isCancelled ? "#dc2626" : "#4f46e5",
+      classNames: isCancelled ? ["cancelled-meeting"] : [],
       extendedProps: {
-        status: m.status // Store status for custom rendering
-      }
-    };
+        status: meeting.status,
+        originalMeeting: meeting,
+      },
+    });
 
-    console.log(`📅 Event created:`, event);
-    return event;
+    count++;
+
+    if (meeting.repeat === "daily") {
+      currentDate.setDate(currentDate.getDate() + 1);
+    } else if (meeting.repeat === "weekly") {
+      currentDate.setDate(currentDate.getDate() + 7);
+    } else if (meeting.repeat === "monthly") {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+    } else {
+      break;
+    }
+  }
+
+  return instances;
+};
+
+  // ✅ Generate all events
+  const events = meetings.flatMap((m) => {
+    if (m.repeat && m.repeat !== "none") {
+      return generateRecurringInstances(m);
+    } else {
+      const meetingEndTime = new Date(m.endTime);
+      const isPastMeeting = meetingEndTime < now;
+
+      return [
+        {
+          id: m.id,
+          title: m.title,
+          start: m.startTime,
+          end: m.endTime,
+
+          allDay: false,
+          display: "block", // ✅ IMPORTANT
+
+          color: m.status === "Cancelled" ? "#dc2626" : isPastMeeting ? "#9ca3af" : "#4f46e5",
+
+          classNames:
+            m.status === "Cancelled" ? ["cancelled-meeting"] : [],
+
+          extendedProps: {
+            status: m.status,
+            originalId: m.id,
+            originalMeeting: m,
+          },
+        },
+      ];
+    }
   });
 
-  console.log('📅 Calendar events:', events);
+  const calendarStyles = `
+    .fc-daygrid-event {
+      margin-bottom: 3px !important;
+      font-size: 12px !important;
+      border-radius: 4px !important;
+      padding: 2px 4px !important;
+    }
 
-  // Enhanced CSS styles for cancelled meetings
-  const cancelledMeetingStyles = `
-    /* Target all possible FullCalendar event elements */
-    .cancelled-meeting,
-    .cancelled-meeting .fc-event,
-    .cancelled-meeting .fc-event-main,
-    .cancelled-meeting .fc-daygrid-event,
-    .cancelled-meeting .fc-timegrid-event {
-      opacity: 0.6 !important;
-      position: relative !important;
+    .fc-daygrid-event-dot {
+      display: none !important;
     }
-    
-    /* Strikethrough for all text elements */
-    .cancelled-meeting .fc-event-title,
-    .cancelled-meeting .fc-event-time,
-    .cancelled-meeting .fc-daygrid-event-dot + *,
-    .cancelled-meeting .fc-event-main,
-    .cancelled-meeting .fc-list-event-title,
-    .cancelled-meeting .fc-list-event-time,
-    .cancelled-meeting * {
-      text-decoration: line-through !important;
-      text-decoration-color: #ef4444 !important;
-      text-decoration-thickness: 2px !important;
+
+    .fc-event-title {
+      font-weight: 500 !important;
     }
-    
-    /* Red overlay for cancelled meetings */
-    .cancelled-meeting::before {
-      content: "CANCELLED";
-      position: absolute !important;
-      top: 2px !important;
-      right: 2px !important;
-      background: #ef4444 !important;
-      color: white !important;
-      padding: 1px 4px !important;
-      border-radius: 2px !important;
-      font-size: 8px !important;
-      font-weight: bold !important;
-      z-index: 1000 !important;
-      pointer-events: none !important;
-      line-height: 1 !important;
-    }
-    
-    /* Different background for cancelled meetings */
-    .cancelled-meeting .fc-event {
-      background-color: #fca5a5 !important;
-      border-color: #ef4444 !important;
-    }
-    
-    /* Force styles on hover */
-    .cancelled-meeting:hover .fc-event-title,
-    .cancelled-meeting:hover .fc-event-time,
-    .cancelled-meeting:hover .fc-event-main {
-      text-decoration: line-through !important;
-      text-decoration-color: #ef4444 !important;
-      text-decoration-thickness: 2px !important;
+
+    /* Cancelled meetings */
+    .cancelled-meeting {
+      opacity: 0.9 !important;
+      color: #991b1b !important;
+      background-color: rgba(254, 226, 226, 0.95) !important;
+      border: 1px solid #f87171 !important;
+      text-decoration: line-through solid #dc2626 !important;
     }
   `;
 
   return (
-    <div style={{ height: "calc(100vh - 80px)" }}>
-      <style dangerouslySetInnerHTML={{ __html: cancelledMeetingStyles }} />
+    <div style={{ height: "100%", width: "100%" }}>
+      <style dangerouslySetInnerHTML={{ __html: calendarStyles }} />
+
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+
         initialView="dayGridMonth"
         height="100%"
+
         events={events}
 
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay"
+        // ✅ CRITICAL FIXES
+        dayMaxEvents={true}
+        eventDisplay="block"
+        eventOverlap={false}
+
+        // Time formatting
+        eventTimeFormat={{
+          hour: "numeric",
+          minute: "2-digit",
+          meridiem: "short",
         }}
 
-        /* CLICK DATE */
+        headerToolbar={{
+          left: "prev,next",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,timeGridDay",
+        }}
+
         dateClick={(info) => {
           onSelect && onSelect(new Date(info.date));
         }}
 
-        /* CLICK EVENT */
         eventClick={(info) => {
-          const meeting = meetings.find(m => m.id === info.event.id);
-          if (meeting) {
-            const now = new Date();
-            const meetingEndTime = new Date(meeting.endTime);
+          const originalMeeting = info.event.extendedProps.originalMeeting;
+          if (!originalMeeting) return;
 
-            if (meetingEndTime < now) {
-              alert('This meeting has already ended and cannot be edited.');
-              return;
+          if (originalMeeting.status === "Cancelled") {
+            onEdit && onEdit(originalMeeting);
+            return;
+          }
+
+          const now = new Date();
+          const meetingStartTime = new Date(originalMeeting.startTime);
+          const meetingEndTime = new Date(originalMeeting.endTime);
+          const canJoinTime = new Date(meetingStartTime.getTime() - 15 * 60 * 1000);
+
+          // Show options: Join or Edit
+          const canJoin = now >= canJoinTime && now <= meetingEndTime;
+          const canEdit = now < meetingEndTime;
+
+          if (canJoin && canEdit) {
+            const action = window.confirm(
+              `Meeting: ${originalMeeting.title}\n\nClick OK to JOIN the meeting\nClick Cancel to EDIT the meeting`
+            );
+            if (action) {
+              onJoin && onJoin(originalMeeting);
+            } else {
+              onEdit && onEdit(originalMeeting);
             }
-
-            onEdit && onEdit(meeting);
+          } else if (canJoin) {
+            onJoin && onJoin(originalMeeting);
+          } else if (canEdit) {
+            onEdit && onEdit(originalMeeting);
+          } else {
+            alert("This meeting has already ended.");
           }
         }}
 
-        /* CUSTOM EVENT RENDERING */
         eventDidMount={(info) => {
-          info.el.title = info.event.title;
-
-          // Force re-apply cancelled styling if needed
           if (info.event.extendedProps.status === "Cancelled") {
             info.el.classList.add("cancelled-meeting");
-
-            // Additional manual styling for better compatibility
-            const titleEl = info.el.querySelector('.fc-event-title');
-            const timeEl = info.el.querySelector('.fc-event-time');
-            const mainEl = info.el.querySelector('.fc-event-main');
-
-            if (titleEl) {
-              titleEl.style.textDecoration = 'line-through';
-              titleEl.style.textDecorationColor = '#ef4444';
-              titleEl.style.textDecorationThickness = '2px';
-            }
-
-            if (timeEl) {
-              timeEl.style.textDecoration = 'line-through';
-              timeEl.style.textDecorationColor = '#ef4444';
-              timeEl.style.textDecorationThickness = '2px';
-            }
-
-            if (mainEl) {
-              mainEl.style.textDecoration = 'line-through';
-              mainEl.style.textDecorationColor = '#ef4444';
-              mainEl.style.textDecorationThickness = '2px';
-            }
           }
         }}
       />
     </div>
   );
 }
+
 export default MeetingCalendar;

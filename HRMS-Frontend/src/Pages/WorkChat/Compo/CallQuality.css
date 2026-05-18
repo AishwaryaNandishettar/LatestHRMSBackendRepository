@@ -1,0 +1,65 @@
+.call-quality {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  cursor: default;
+}
+
+.quality-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 20px;
+}
+
+.quality-bar {
+  width: 4px;
+  border-radius: 2px;
+  transition: background 0.3s;
+}
+
+.quality-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f1f1f;
+  border: 1px solid #3b3a39;
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 300;
+  animation: tooltip-pop 0.15s ease;
+  white-space: nowrap;
+}
+
+@keyframes tooltip-pop {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.quality-tooltip-title {
+  font-size: 12px;
+  color: #c7c7c7;
+  margin-bottom: 8px;
+  text-transform: capitalize;
+}
+
+.quality-tooltip-title strong {
+  color: #fff;
+}
+
+.quality-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+  color: #8a8886;
+  padding: 2px 0;
+}
+
+.quality-tooltip-row span:last-child {
+  color: #fff;
+  font-weight: 600;
+}

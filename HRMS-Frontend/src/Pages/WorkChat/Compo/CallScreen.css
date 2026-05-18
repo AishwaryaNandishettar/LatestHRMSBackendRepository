@@ -1,0 +1,1528 @@
+/* ============================================================================
+   CallScreen.css — Microsoft Teams-style Call UI (Dark Theme)
+   ============================================================================ */
+
+:root {
+  --cs-bg-dark: #292929;
+  --cs-bg-darker: #1f1f1f;
+  --cs-bg-panel: #242424;
+  --cs-text-primary: #ffffff;
+  --cs-text-secondary: #c7c7c7;
+  --cs-text-muted: #8a8886;
+  --cs-border: #3b3a39;
+  --cs-accent: #6264a7;
+  --cs-accent-hover: #7b7db8;
+  --cs-danger: #c4314b;
+  --cs-danger-hover: #d13c52;
+  --cs-success: #92c353;
+  --cs-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Window ────────────────────────────────────────────────────────────────── */
+.cs-window {
+  position: fixed;
+  z-index: 9999;
+  width: 900px;
+  height: 600px;
+  background: var(--cs-bg-dark);
+  border-radius: 12px;
+  box-shadow: var(--cs-shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  user-select: none;
+  transition: box-shadow 0.2s;
+}
+
+.cs-window.cs-dragging {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8);
+  cursor: grabbing;
+}
+
+.cs-window.cs-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.cs-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--cs-bg-darker);
+  border-bottom: 1px solid var(--cs-border);
+  flex-shrink: 0;
+}
+
+/* When the whole header is the drag handle */
+.cs-header.cs-drag-handle {
+  cursor: grab;
+  user-select: none;
+}
+.cs-dragging .cs-header.cs-drag-handle { cursor: grabbing; }
+
+.cs-drag-handle {
+  cursor: grab;
+  color: var(--cs-text-muted);
+  font-size: 18px;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  user-select: none;
+}
+.cs-drag-handle:hover { background: rgba(255, 255, 255, 0.05); }
+.cs-dragging .cs-drag-handle { cursor: grabbing; }
+
+/* ── Minimized bar ─────────────────────────────────────────────────────────── */
+.cs-window.cs-minimized-bar {
+  width: 300px !important;
+  height: auto !important;
+  border-radius: 12px !important;
+  overflow: visible !important;
+}
+
+.cs-minimized-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--cs-bg-darker);
+  border-radius: 12px;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cs-minimized-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cs-minimized-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cs-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-minimized-status {
+  font-size: 11px;
+  color: var(--cs-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cs-minimized-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.cs-icon-btn--danger {
+  color: var(--cs-danger) !important;
+}
+.cs-icon-btn--danger:hover {
+  background: rgba(196, 49, 75, 0.15) !important;
+  color: var(--cs-danger-hover) !important;
+}
+
+.cs-header-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cs-header-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cs-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-header-status {
+  font-size: 12px;
+  color: var(--cs-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cs-status-live {
+  color: var(--cs-success);
+  font-weight: 600;
+}
+
+.cs-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cs-success);
+  animation: cs-pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes cs-pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.cs-header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.cs-icon-btn {
+  background: none;
+  border: none;
+  color: var(--cs-text-secondary);
+  font-size: 16px;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cs-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cs-text-primary);
+}
+
+/* ── Body ──────────────────────────────────────────────────────────────────── */
+.cs-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Stage (main video area) ───────────────────────────────────────────────── */
+.cs-stage {
+  flex: 1;
+  position: relative;
+  background: var(--cs-bg-darker);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Screen share banner */
+.cs-screenshare-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--cs-text-primary);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+
+.cs-stop-share-btn {
+  background: var(--cs-danger);
+  border: none;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: background 0.15s;
+}
+.cs-stop-share-btn:hover { background: var(--cs-danger-hover); }
+
+/* Incoming call overlay */
+.cs-incoming-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #1f1f1f 0%, #292929 100%);
+  z-index: 50;
+}
+
+.cs-incoming-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cs-accent), #8b8dc9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.cs-incoming-name {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--cs-text-primary);
+  margin: 0;
+}
+
+.cs-incoming-sub {
+  font-size: 16px;
+  color: var(--cs-text-secondary);
+  margin: 0;
+}
+
+.cs-incoming-btns {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.cs-accept-btn,
+.cs-reject-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.cs-accept-btn {
+  background: var(--cs-success);
+  color: #fff;
+}
+.cs-accept-btn:hover {
+  background: #a0d060;
+  transform: scale(1.05);
+}
+
+.cs-reject-btn {
+  background: var(--cs-danger);
+  color: #fff;
+}
+.cs-reject-btn:hover {
+  background: var(--cs-danger-hover);
+  transform: scale(1.05);
+}
+
+/* Waiting / calling overlay */
+.cs-waiting-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #1f1f1f 0%, #292929 100%);
+  z-index: 50;
+}
+
+.cs-waiting-avatar {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6264a7, #8b8dc9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.cs-pulse-ring {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid rgba(98, 100, 167, 0.4);
+  animation: cs-pulse 2s ease-out infinite;
+}
+.cs-pulse-ring.cs-pr2 { animation-delay: 0.6s; }
+.cs-pulse-ring.cs-pr3 { animation-delay: 1.2s; }
+
+@keyframes cs-pulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.cs-waiting-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--cs-text-primary);
+  margin: 0;
+}
+
+.cs-waiting-status {
+  font-size: 14px;
+  color: var(--cs-text-secondary);
+  margin: 0;
+}
+
+/* ── Video Grid ────────────────────────────────────────────────────────────── */
+.cs-grid {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  width: 100%;
+  height: 100%;
+  grid-auto-rows: 1fr;
+}
+
+/* Tile */
+.cs-tile {
+  position: relative;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+  transition: transform 0.2s;
+}
+
+.cs-tile:hover {
+  transform: scale(1.02);
+}
+
+.cs-tile-speaking {
+  box-shadow: 0 0 0 3px var(--cs-success);
+}
+
+.cs-speaking-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 8px;
+  border: 3px solid var(--cs-success);
+  pointer-events: none;
+  animation: cs-speaking-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes cs-speaking-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.cs-tile-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cs-tile-avatar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b3a39 0%, #292929 100%);
+}
+
+.cs-tile-avatar-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cs-accent), #8b8dc9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.cs-tile-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cs-tile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-tile-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cs-tile-icon-muted {
+  color: var(--cs-danger);
+  font-size: 14px;
+}
+
+.cs-tile-hand {
+  font-size: 16px;
+}
+
+.cs-tile-connecting {
+  font-size: 14px;
+  color: var(--cs-text-secondary);
+}
+
+/* Muted badge */
+.cs-muted-badge {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(196, 49, 75, 0.9);
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(8px);
+  z-index: 100;
+}
+
+/* ── Side Panel ────────────────────────────────────────────────────────────── */
+.cs-side-panel {
+  width: 320px;
+  background: var(--cs-bg-panel);
+  border-left: 1px solid var(--cs-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  animation: cs-slide-in 0.2s ease;
+}
+
+@keyframes cs-slide-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.cs-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cs-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--cs-border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cs-text-primary);
+  flex-shrink: 0;
+}
+
+.cs-panel-close {
+  background: none;
+  border: none;
+  color: var(--cs-text-secondary);
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cs-panel-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cs-text-primary);
+}
+
+/* Chat panel */
+.cs-panel-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-panel-empty {
+  text-align: center;
+  color: var(--cs-text-muted);
+  font-size: 13px;
+  font-style: italic;
+  margin-top: 24px;
+}
+
+.cs-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid var(--cs-border);
+}
+
+.cs-msg-own {
+  background: rgba(98, 100, 167, 0.15);
+  border-left-color: var(--cs-accent);
+}
+
+.cs-msg-sender {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cs-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cs-msg-text {
+  font-size: 13px;
+  color: var(--cs-text-primary);
+  word-break: break-word;
+}
+
+.cs-msg-time {
+  font-size: 10px;
+  color: var(--cs-text-muted);
+  text-align: right;
+}
+
+.cs-panel-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--cs-border);
+  flex-shrink: 0;
+}
+
+.cs-panel-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--cs-border);
+  border-radius: 20px;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cs-text-primary);
+  transition: border-color 0.15s;
+}
+.cs-panel-input:focus {
+  border-color: var(--cs-accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+.cs-panel-input::placeholder { color: var(--cs-text-muted); }
+
+.cs-panel-send {
+  background: var(--cs-accent);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.cs-panel-send:hover { background: var(--cs-accent-hover); }
+
+/* People panel */
+.cs-panel-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.cs-person-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.cs-person-row:hover { background: rgba(255, 255, 255, 0.05); }
+
+.cs-person-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b8dc9, var(--cs-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.cs-person-self {
+  background: linear-gradient(135deg, var(--cs-success), #a0d060);
+}
+
+.cs-person-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cs-person-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cs-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-person-status {
+  font-size: 11px;
+  color: var(--cs-text-secondary);
+}
+
+.cs-person-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.cs-badge-host {
+  background: rgba(146, 195, 83, 0.2);
+  color: var(--cs-success);
+}
+
+.cs-person-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.cs-person-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--cs-border);
+  color: var(--cs-text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cs-person-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--cs-text-primary);
+}
+
+.cs-person-btn-remove {
+  color: var(--cs-danger);
+}
+.cs-person-btn-remove:hover {
+  background: rgba(196, 49, 75, 0.2);
+  border-color: var(--cs-danger);
+}
+
+/* Settings panel */
+.cs-panel-settings {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cs-setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-setting-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cs-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cs-setting-group select {
+  padding: 8px 12px;
+  border: 1px solid var(--cs-border);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--cs-text-primary);
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.cs-setting-group select:focus {
+  border-color: var(--cs-accent);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cs-device-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cs-device-on {
+  background: rgba(146, 195, 83, 0.15);
+  color: var(--cs-success);
+}
+
+.cs-device-off {
+  background: rgba(196, 49, 75, 0.15);
+  color: var(--cs-danger);
+}
+
+/* Scrollbars */
+.cs-panel-msgs::-webkit-scrollbar,
+.cs-panel-list::-webkit-scrollbar,
+.cs-panel-settings::-webkit-scrollbar {
+  width: 6px;
+}
+.cs-panel-msgs::-webkit-scrollbar-track,
+.cs-panel-list::-webkit-scrollbar-track,
+.cs-panel-settings::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cs-panel-msgs::-webkit-scrollbar-thumb,
+.cs-panel-list::-webkit-scrollbar-thumb,
+.cs-panel-settings::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+.cs-panel-msgs::-webkit-scrollbar-thumb:hover,
+.cs-panel-list::-webkit-scrollbar-thumb:hover,
+.cs-panel-settings::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Control Bar ───────────────────────────────────────────────────────────── */
+.cs-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--cs-bg-darker);
+  border-top: 1px solid var(--cs-border);
+  flex-shrink: 0;
+}
+
+.cs-controls-left,
+.cs-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-controls-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-ctrl-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cs-text-secondary);
+  padding: 0 8px;
+}
+
+.cs-ctrl-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--cs-text-primary);
+  font-size: 20px;
+  font-family: inherit;
+  transition: all 0.15s;
+  position: relative;
+}
+.cs-ctrl-btn span {
+  font-size: 11px;
+  font-weight: 600;
+}
+.cs-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.cs-ctrl-active {
+  background: var(--cs-accent);
+  color: #fff;
+}
+.cs-ctrl-active:hover {
+  background: var(--cs-accent-hover);
+}
+
+.cs-ctrl-danger {
+  background: rgba(196, 49, 75, 0.2);
+  color: var(--cs-danger);
+}
+.cs-ctrl-danger:hover {
+  background: rgba(196, 49, 75, 0.3);
+}
+
+.cs-leave-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  background: var(--cs-danger);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 20px;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.cs-leave-btn span {
+  font-size: 11px;
+  font-weight: 700;
+}
+.cs-leave-btn:hover {
+  background: var(--cs-danger-hover);
+  transform: translateY(-2px);
+}
+
+.cs-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--cs-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 2px 6px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .cs-window {
+    width: calc(100vw - 32px);
+    height: calc(100vh - 32px);
+  }
+  .cs-side-panel {
+    width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cs-ctrl-btn span,
+  .cs-leave-btn span {
+    display: none;
+  }
+  .cs-controls-left,
+  .cs-controls-right {
+    gap: 4px;
+  }
+  .cs-controls-center {
+    gap: 4px;
+  }
+  .cs-ctrl-btn,
+  .cs-leave-btn {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .cs-side-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 320px;
+    z-index: 200;
+  }
+}
+
+/* ============================================================================
+   Phase 2 additions
+   ============================================================================ */
+
+/* ── Recording badge in header ─────────────────────────────────────────────── */
+.cs-rec-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(196, 49, 75, 0.2);
+  color: #f1707a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  border: 1px solid rgba(196, 49, 75, 0.4);
+  letter-spacing: 0.5px;
+}
+
+.cs-rec-dot {
+  font-size: 8px;
+  animation: cs-pulse-dot 1s ease-in-out infinite;
+}
+
+/* ── Waiting room badge on stage ───────────────────────────────────────────── */
+.cs-waiting-room-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(98, 100, 167, 0.9);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.cs-waiting-room-badge:hover {
+  background: rgba(98, 100, 167, 1);
+  transform: scale(1.05);
+}
+
+/* ── Control button variants (Phase 2 naming) ──────────────────────────────── */
+.cs-ctrl-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--cs-text-primary);
+  font-size: 20px;
+  font-family: inherit;
+  transition: all 0.15s;
+  position: relative;
+  min-width: 56px;
+}
+.cs-ctrl-btn span {
+  font-size: 11px;
+  font-weight: 600;
+}
+.cs-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+.cs-ctrl-btn--active {
+  background: var(--cs-accent);
+  color: #fff;
+}
+.cs-ctrl-btn--active:hover {
+  background: var(--cs-accent-hover);
+}
+.cs-ctrl-btn--danger {
+  background: rgba(196, 49, 75, 0.2);
+  color: var(--cs-danger);
+}
+.cs-ctrl-btn--danger:hover {
+  background: rgba(196, 49, 75, 0.3);
+}
+.cs-ctrl-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--cs-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 2px 5px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ── Tile variants (Phase 2 naming) ────────────────────────────────────────── */
+.cs-tile--speaking {
+  box-shadow: 0 0 0 3px var(--cs-success);
+}
+.cs-tile--self {}
+
+.cs-tile-initials {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.cs-tile-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cs-tile-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-tile-hand {
+  color: #f8c537;
+  font-size: 14px;
+}
+
+.cs-tile-muted {
+  color: var(--cs-danger);
+  font-size: 14px;
+}
+
+.cs-tile-speaking-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cs-success);
+  animation: cs-pulse-dot 1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* ── Connection state dot ───────────────────────────────────────────────────── */
+.cs-conn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.cs-conn-dot--connected    { background: var(--cs-success); }
+.cs-conn-dot--connecting   { background: #f8c537; animation: cs-pulse-dot 1s infinite; }
+.cs-conn-dot--disconnected { background: var(--cs-danger); }
+.cs-conn-dot--failed       { background: var(--cs-danger); }
+
+/* ── People panel ───────────────────────────────────────────────────────────── */
+.cs-people-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.cs-people-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.cs-people-item:hover { background: rgba(255,255,255,0.05); }
+.cs-people-item--self {}
+
+.cs-people-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cs-accent), #8b8dc9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.cs-people-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cs-people-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cs-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-people-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--cs-text-secondary);
+}
+
+.cs-people-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.cs-people-action {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--cs-border);
+  color: var(--cs-text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.cs-people-action:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--cs-text-primary);
+}
+.cs-people-action--remove { color: var(--cs-danger); }
+.cs-people-action--remove:hover {
+  background: rgba(196,49,75,0.2);
+  border-color: var(--cs-danger);
+}
+
+/* ── Settings panel body ────────────────────────────────────────────────────── */
+.cs-settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cs-settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cs-settings-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cs-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cs-settings-select {
+  padding: 8px 12px;
+  border: 1px solid var(--cs-border);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--cs-text-primary);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+.cs-settings-select:focus { border-color: var(--cs-accent); }
+
+.cs-settings-toggle-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cs-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--cs-border);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.05);
+  color: var(--cs-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.cs-toggle-btn:hover { background: rgba(255,255,255,0.1); }
+.cs-toggle-btn--on {
+  background: rgba(98,100,167,0.2);
+  border-color: var(--cs-accent);
+  color: var(--cs-accent);
+}
+
+/* ── Waiting room panel ─────────────────────────────────────────────────────── */
+.cs-waiting-empty {
+  text-align: center;
+  color: var(--cs-text-muted);
+  font-size: 13px;
+  font-style: italic;
+  padding: 24px 16px;
+}
+
+.cs-waiting-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.cs-waiting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--cs-border);
+}
+.cs-waiting-item:last-child { border-bottom: none; }
+
+.cs-waiting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-waiting-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cs-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-waiting-email {
+  font-size: 11px;
+  color: var(--cs-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-waiting-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cs-waiting-admit,
+.cs-waiting-deny {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.cs-waiting-admit {
+  background: var(--cs-success);
+  color: #fff;
+}
+.cs-waiting-admit:hover { background: #a0d060; }
+
+.cs-waiting-deny {
+  background: rgba(196,49,75,0.15);
+  color: var(--cs-danger);
+  border: 1px solid rgba(196,49,75,0.3);
+}
+.cs-waiting-deny:hover { background: rgba(196,49,75,0.3); }
+
+/* ── Chat textarea ──────────────────────────────────────────────────────────── */
+.cs-chat-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--cs-border);
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+  background: rgba(255,255,255,0.05);
+  color: var(--cs-text-primary);
+  resize: none;
+  transition: border-color 0.15s;
+}
+.cs-chat-input:focus { border-color: var(--cs-accent); }
+.cs-chat-input::placeholder { color: var(--cs-text-muted); }
+
+.cs-chat-send {
+  background: var(--cs-accent);
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  align-self: flex-end;
+  transition: background 0.15s;
+}
+.cs-chat-send:hover { background: var(--cs-accent-hover); }
+
+.cs-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cs-chat-empty {
+  text-align: center;
+  color: var(--cs-text-muted);
+  font-size: 13px;
+  font-style: italic;
+  margin-top: 24px;
+}
+
+.cs-chat-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  border-left: 3px solid var(--cs-border);
+}
+.cs-chat-msg--self {
+  background: rgba(98,100,167,0.15);
+  border-left-color: var(--cs-accent);
+}
+
+.cs-chat-sender {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cs-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.cs-chat-text {
+  font-size: 13px;
+  color: var(--cs-text-primary);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.cs-chat-time {
+  font-size: 10px;
+  color: var(--cs-text-muted);
+  text-align: right;
+}
+
+.cs-chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--cs-border);
+  flex-shrink: 0;
+  align-items: flex-end;
+}
+
+/* Scrollbars for chat/people/settings */
+.cs-chat-messages::-webkit-scrollbar,
+.cs-people-list::-webkit-scrollbar,
+.cs-settings-body::-webkit-scrollbar,
+.cs-waiting-list::-webkit-scrollbar {
+  width: 4px;
+}
+.cs-chat-messages::-webkit-scrollbar-thumb,
+.cs-people-list::-webkit-scrollbar-thumb,
+.cs-settings-body::-webkit-scrollbar-thumb,
+.cs-waiting-list::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+}

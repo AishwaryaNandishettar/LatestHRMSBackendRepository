@@ -27,13 +27,28 @@ export default function CalendarModal({ token, loggedInEmail, onClose }) {
       return;
     }
 
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    if (endDate <= startDate) {
+      alert("End date/time should be greater than start date/time");
+      return;
+    }
+
+    // Convert datetime-local format to ISO 8601 format
+    const formatDateTimeForBackend = (dateTimeLocal) => {
+      if (!dateTimeLocal) return null;
+      const date = new Date(dateTimeLocal);
+      return date.toISOString();
+    };
+
     await createMeeting(
       {
         title,
-        participantEmails: [...members, loggedInEmail],
+        participantEmails: [...members, loggedInEmail].filter(Boolean),
         createdByEmail: loggedInEmail,
-        startTime: start,
-        endTime: end,
+        startTime: formatDateTimeForBackend(start),
+        endTime: formatDateTimeForBackend(end),
       },
       token
     );
@@ -56,6 +71,7 @@ export default function CalendarModal({ token, loggedInEmail, onClose }) {
         <input
           type="datetime-local"
           value={start}
+          min={new Date().toISOString().slice(0, 16)}
           onChange={(e) => setStart(e.target.value)}
         />
 
@@ -63,6 +79,7 @@ export default function CalendarModal({ token, loggedInEmail, onClose }) {
         <input
           type="datetime-local"
           value={end}
+          min={start || new Date().toISOString().slice(0, 16)}
           onChange={(e) => setEnd(e.target.value)}
         />
 

@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import {
   createMeeting,
   updateMeeting,
-  deleteMeeting
+  deleteMeeting,
+  checkParticipantConflict
 } from "../../../../api/meetingApi";
 import {
   searchParticipants,
@@ -22,7 +23,7 @@ export default function MeetingForm({
   const [emails, setEmails] = useState([]);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const [remarks, setRemarks] = useState(""); // ✅ ADD REMARKS STATE
+  const [remarks, setRemarks] = useState("");
 
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -32,8 +33,15 @@ export default function MeetingForm({
   
   // Validation state
   const [timeError, setTimeError] = useState("");
-  const [pastTimeError, setPastTimeError] = useState(""); // ✅ ADD PAST TIME ERROR STATE
+  const [pastTimeError, setPastTimeError] = useState("");
+
+  // Conflict warnings: { email -> "conflicts with: Meeting Title" }
+  const [conflictWarnings, setConflictWarnings] = useState({});
   
+  const [repeatUntil, setRepeatUntil] = useState("");
+  const [repeatCount, setRepeatCount] = useState("");
+  const [selectedDays, setSelectedDays] = useState([]);
+
   // Add Participant Modal state
   const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
   
@@ -135,15 +143,46 @@ export default function MeetingForm({
   }, [query, emails]);
 
   /* HANDLE ADD PARTICIPANT FROM MODAL */
-  const handleAddParticipant = (employee) => {
-    console.log('👥 Adding participant:', employee);
-    
-    // Add email to the list if not already present
-    if (!emails.includes(employee.email)) {
-      setEmails([...emails, employee.email]);
+  const handleAddParticipant = async (employee) => {
+    if (emails.includes(employee.email)) {
+      setShowAddParticipantModal(false);
+      return;
     }
-    
-    // Close the modal
+
+    // Check for conflict if start/end times are already set
+    if (start && end && token) {
+      try {
+        const result = await checkParticipantConflict(
+          employee.email,
+          new Date(start).toISOString(),
+          new Date(end).toISOString(),
+          token,
+          meeting?.id || ""
+        );
+        if (result.hasConflict) {
+          const conflictStart = new Date(result.conflictingMeetingStart).toLocaleString([], {
+            month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+          });
+          setConflictWarnings(prev => ({
+            ...prev,
+            [employee.email]: `Already has "${result.conflictingMeetingTitle}" at ${conflictStart}`
+          }));
+          // Still block adding — don't add the participant
+          setShowAddParticipantModal(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Conflict check failed:", err);
+        // Don't block on network error — let backend validate on save
+      }
+    }
+
+    setEmails(prev => [...prev, employee.email]);
+    setConflictWarnings(prev => {
+      const next = { ...prev };
+      delete next[employee.email];
+      return next;
+    });
     setShowAddParticipantModal(false);
   };
 
@@ -151,6 +190,17 @@ export default function MeetingForm({
   const save = async () => {
     if (!title || !start || !end) {
       alert("Fill all fields");
+      return;
+    }
+
+    // Validate repeat settings when repeat is enabled
+    if (repeat !== "none" && !repeatUntil && !repeatCount) {
+      alert("Please set either a repeat end date or number of occurrences for repeating meetings.");
+      return;
+    }
+
+    if (repeat === "weekly" && selectedDays.length === 0) {
+      alert("Please select at least one weekday for weekly repeating meetings.");
       return;
     }
 
@@ -177,15 +227,19 @@ export default function MeetingForm({
       return date.toISOString();
     };
 
-    const payload = {
-      title,
-      participantEmails: emails,
-      remarks, // ✅ ADD REMARKS TO PAYLOAD
-      startTime: formatDateTimeForBackend(start),
-      endTime: formatDateTimeForBackend(end),
-      status,
-      repeat
-    };
+   const payload = {
+  title,
+  participantEmails: emails,
+  remarks,
+  startTime: formatDateTimeForBackend(start),
+  endTime: formatDateTimeForBackend(end),
+  status,
+  repeat,
+  // Convert date-only "YYYY-MM-DD" to full ISO instant for backend
+  repeatUntil: repeatUntil ? new Date(repeatUntil + "T23:59:59.000Z").toISOString() : null,
+  repeatCount: repeatCount ? parseInt(repeatCount) : null,
+  daysOfWeek: repeat === "weekly" ? selectedDays : []
+};
 
     try {
       const res = meeting && meeting.id
@@ -195,8 +249,14 @@ export default function MeetingForm({
       onSaved(res);
     } catch (err) {
       console.error("Save error:", err);
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to save meeting';
-      alert(`Save failed: ${errorMessage}`);
+      if (err.response?.status === 409) {
+        // Conflict — show inline error, don't close the form
+        const msg = err.response?.data?.message || "One or more participants have a conflicting meeting at this time.";
+        alert(`⚠️ Scheduling Conflict\n\n${msg}`);
+      } else {
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to save meeting';
+        alert(`Save failed: ${errorMessage}`);
+      }
     }
   };
 
@@ -269,6 +329,7 @@ export default function MeetingForm({
     <div className="wc-modal-backdrop">
       <div className="wc-modal meeting-modal modern-meeting-form">
 
+        {/* Fixed header */}
         <div className="meeting-form-header">
           <div className="header-icon">
             📅
@@ -278,6 +339,9 @@ export default function MeetingForm({
             {meeting && meeting.id ? "Update your meeting details" : "Create a new meeting with your team"}
           </p>
         </div>
+
+        {/* Scrollable body */}
+        <div className="meeting-form-body">
 
         <div className="form-section">
           <label className="form-label">
@@ -312,14 +376,39 @@ export default function MeetingForm({
             {emails.map((e, index) => (
               <span 
                 key={`${e}-${index}`} 
-                className="chip"
-                onClick={() => setEmails(emails.filter(x => x !== e))}
+                className={`chip${conflictWarnings[e] ? " chip--conflict" : ""}`}
+                title={conflictWarnings[e] || undefined}
+                onClick={() => {
+                  setEmails(emails.filter(x => x !== e));
+                  setConflictWarnings(prev => {
+                    const next = { ...prev };
+                    delete next[e];
+                    return next;
+                  });
+                }}
               >
                 <span className="chip-text">{e}</span>
+                {conflictWarnings[e] && (
+                  <span className="chip-conflict-icon" title={conflictWarnings[e]}>⚠️</span>
+                )}
                 <span className="chip-remove">✕</span>
               </span>
             ))}
           </div>
+
+          {/* Conflict warning banner */}
+          {Object.keys(conflictWarnings).length > 0 && (
+            <div className="conflict-warning-banner">
+              <span className="conflict-warning-icon">⚠️</span>
+              <div className="conflict-warning-list">
+                {Object.entries(conflictWarnings).map(([email, msg]) => (
+                  <div key={email} className="conflict-warning-row">
+                    <strong>{email}</strong> — {msg}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="form-section">
@@ -414,6 +503,57 @@ export default function MeetingForm({
           </div>
         </div>
 
+        {repeat !== "none" && (
+          <div className="form-section">
+            <label className="form-label">
+              <span className="label-icon">📅</span>
+              Repeat Settings
+            </label>
+
+            {repeat === "weekly" && (
+              <div className="weekdays">
+                {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`weekday-btn ${selectedDays.includes(i) ? "active" : ""}`}
+                    onClick={() => {
+                      setSelectedDays(prev =>
+                        prev.includes(i)
+                          ? prev.filter(d => d !== i)
+                          : [...prev, i]
+                      );
+                    }}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <input
+              type="date"
+              className="input modern-input"
+              value={repeatUntil}
+              onChange={(e) => setRepeatUntil(e.target.value)}
+              min={start ? start.split("T")[0] : undefined}
+            />
+
+            <div style={{ textAlign: "center", margin: "6px 0" }}>OR</div>
+
+            <input
+              type="number"
+              className="input modern-input"
+              placeholder="Number of occurrences"
+              value={repeatCount}
+              onChange={(e) => setRepeatCount(e.target.value)}
+            />
+          </div>
+        )}
+
+        </div>{/* end meeting-form-body */}
+
+        {/* Fixed action bar — always visible */}
         <div className="wc-modal-actions modern-actions">
           <button className="btn modern-btn btn-secondary" onClick={onClose}>
             <span className="btn-icon">✕</span>

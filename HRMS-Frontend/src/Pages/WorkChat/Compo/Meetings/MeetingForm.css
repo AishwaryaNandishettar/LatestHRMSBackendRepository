@@ -5,22 +5,24 @@
   padding: 0;
   max-width: 300px;
   max-height: 75vh;
-  overflow-y: auto;
+  overflow: hidden;          /* outer container does NOT scroll */
   border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header Section */
 .meeting-form-header {
   background: rgba(255, 255, 255, 0.95);
-  padding: 15px 20px;
+  padding: 4px 16px 6px;
   text-align: center;
   border-bottom: 3px solid rgba(102, 126, 234, 0.3);
 }
 
 .header-icon {
-  font-size: 2rem;
-  margin-bottom: 5px;
+  font-size: 1.4rem;
+  margin-bottom: 2px;
   animation: bounce 2s infinite;
 }
 
@@ -34,24 +36,43 @@
 }
 
 .meeting-form-header h2 {
-  margin: 5px 0 3px 0;
+  margin: 2px 0 2px 0;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
 }
 
 .header-subtitle {
   color: #6b7280;
-  font-size: 0.85rem;
-  margin: 3px 0 0 0;
+  font-size: 0.78rem;
+  margin: 0 0 2px 0;
 }
 
-/* Form Content */
-.modern-meeting-form > * {
+/* Form Content — scrollable body */
+.modern-meeting-form > *:not(.meeting-form-header):not(.wc-modal-actions) {
   padding: 0 20px;
+}
+
+/* Scrollable content area */
+.meeting-form-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Scrollbar for form body */
+.meeting-form-body::-webkit-scrollbar {
+  width: 5px;
+}
+.meeting-form-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.meeting-form-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
 }
 
 .modern-meeting-form .wc-modal-actions {
@@ -59,27 +80,24 @@
 }
 
 .form-section {
-  margin-bottom: 12px;
   background: rgba(255, 255, 255, 0.95);
-  padding: 8px 15px;
+  padding: 8px 10px;
   border-radius: 12px;
-  margin: 16px;
+  margin: 8px 10px;
   max-width: 100%;
-   
 }
 
 .form-section.half {
   flex: 1;
   min-width: 0;
   max-width: none;
-   gap: 12px; 
+  gap: 12px;
 }
 
 .form-row {
   display: flex;
-  gap: 12px; 
-  padding: 12px 15px;
-  
+  gap: 8px;
+  padding: 0 12px;
 }
 
 /* Labels */
@@ -295,43 +313,6 @@
   opacity: 1;
 }
 
-/* Add Participant Button */
-.participants-input-wrapper {
-  margin-bottom: 8px;
-}
-
-.add-participant-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3), 0 2px 4px rgba(102, 126, 234, 0.2);
-}
-
-.add-participant-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4), 0 3px 6px rgba(102, 126, 234, 0.3);
-  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
-}
-
-.add-participant-btn:active {
-  transform: translateY(0);
-}
-
-.add-participant-btn .btn-icon {
-  font-size: 1.1rem;
-}
-
 /* Error Messages */
 .error-message {
   margin-top: 6px;
@@ -372,29 +353,32 @@
   font-size: 1.2rem;
 }
 
-/* Modern Action Buttons */
+/* Modern Action Buttons — always pinned at bottom */
 .modern-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 0 0 20px 20px;
-  margin-top: 12px;
+  padding: 3px 7px 5px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(102, 126, 234, 0.2);
 }
 
 .modern-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 5px 10px;
+  padding: 8px 10px;
   border: none;
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
 }
 
 .modern-btn:hover {
@@ -531,4 +515,73 @@
     width: 100%;
     justify-content: center;
   }
+
+  .weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.weekday-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.weekday-btn.active {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+}
+
+/* ===== CONFLICT WARNING STYLES ===== */
+
+/* Chip with conflict */
+.chip--conflict {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.chip-conflict-icon {
+  font-size: 0.9rem;
+}
+
+/* Conflict warning banner below chips */
+.conflict-warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.conflict-warning-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.conflict-warning-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conflict-warning-row {
+  font-size: 0.82rem;
+  color: #92400e;
+  line-height: 1.4;
+}
+
+.conflict-warning-row strong {
+  color: #78350f;
 }
